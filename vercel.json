@@ -1,0 +1,4 @@
+{
+  "builds": [ { "src": "quote.js", "use": "@vercel/node", "config": { "includeFiles": ["index.html"] } } ],
+  "routes": [ { "src": "/(.*)", "dest": "/quote.js" } ]
+}
