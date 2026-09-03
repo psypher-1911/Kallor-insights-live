@@ -1,0 +1,64 @@
+// Kallor Insights — single Vercel function: basic auth + static screen + /api/quote (ASX:CTD public data, ~20 min delayed)
+import fs from 'node:fs';
+import path from 'node:path';
+const UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) KallorInsights/1.0';
+const SYMBOL=process.env.KALLOR_SYMBOL||'CTD';
+const USER=process.env.KALLOR_USER||'nate', PASS=process.env.KALLOR_PASS||'ctd-2026';
+let cache={at:0,data:null};
+function sydneyOpen(){const s=new Date(new Date().toLocaleString('en-US',{timeZone:'Australia/Sydney'}));const m=s.getHours()*60+s.getMinutes();return s.getDay()>0&&s.getDay()<6&&m>=600&&m<=976}
+async function yahoo(){
+  const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}.AX?interval=1m&range=1d&includePrePost=false`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+  if(!r.ok)throw new Error('yahoo '+r.status);const j=await r.json();const res=j.chart?.result?.[0];if(!res)throw new Error('yahoo empty');
+  const meta=res.meta||{},q=res.indicators?.quote?.[0]||{};let pv=0,v=0,hi=-Infinity,lo=Infinity;
+  (q.close||[]).forEach((c,i)=>{const vol=q.volume?.[i]||0;if(c!=null&&vol>0){pv+=c*vol;v+=vol}if(q.high?.[i]!=null)hi=Math.max(hi,q.high[i]);if(q.low?.[i]!=null)lo=Math.min(lo,q.low[i])});
+  const price=meta.regularMarketPrice??[...(q.close||[])].reverse().find(x=>x!=null);if(!price)throw new Error('yahoo no price');
+  return{source:'Yahoo Finance',price,volume:meta.regularMarketVolume??v,vwap:v?pv/v:null,high:isFinite(hi)?hi:null,low:isFinite(lo)?lo:null,prevClose:meta.chartPreviousClose??meta.previousClose??null,asOf:meta.regularMarketTime?meta.regularMarketTime*1000:Date.now()}}
+async function asx(){
+  const r=await fetch(`https://asx.api.markitdigital.com/asx-research/1.0/companies/${SYMBOL.toLowerCase()}/header`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+  if(!r.ok)throw new Error('asx '+r.status);const d=(await r.json()).data||{};if(!d.priceLast)throw new Error('asx no price');
+  return{source:'ASX (public)',price:d.priceLast,volume:d.volume??null,vwap:null,high:d.priceDayHigh??null,low:d.priceDayLow??null,prevClose:d.priceLast-(d.priceChange??0),asOf:Date.now()}}
+async function quote(){
+  if(Date.now()-cache.at<20000&&cache.data)return cache.data;
+  const errors=[];for(const fn of [yahoo,asx]){try{const q=await fn();q.marketOpen=sydneyOpen();q.symbol='ASX:'+SYMBOL;q.fetchedAt=Date.now();cache={at:Date.now(),data:q};return q}catch(e){errors.push(String(e.message||e))}}
+  if(cache.data)return{...cache.data,stale:true,errors};throw new Error(errors.join(' | '))}
+
+// ---- ASX announcements (public asx.com.au JSON; fallback markit API) ----
+let annCache={at:0,data:null};
+async function announcements(){
+  if(Date.now()-annCache.at<120000&&annCache.data)return annCache.data;
+  const errors=[];
+  try{const r=await fetch(`https://www.asx.com.au/asx/1/company/${SYMBOL}/announcements?count=25&market_sensitive=false`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+    if(!r.ok)throw new Error('asx.com.au '+r.status);const j=await r.json();const items=(j.data||[]).map(a=>({t:(a.document_release_date||a.document_date||'').slice(0,10),headline:a.header,url:a.url||('https://www.asx.com.au'+(a.relative_url||'')),sensitive:!!a.market_sensitive,src:'ASX'}));
+    if(items.length){annCache={at:Date.now(),data:items};return items}throw new Error('asx.com.au empty')}catch(e){errors.push(String(e.message||e))}
+  try{const r=await fetch(`https://asx.api.markitdigital.com/asx-research/1.0/companies/${SYMBOL.toLowerCase()}/announcements?count=25&expand=true`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+    if(!r.ok)throw new Error('markit '+r.status);const j=await r.json();const items=((j.data&&j.data.items)||[]).map(a=>({t:(a.documentReleaseDate||a.date||'').slice(0,10),headline:a.headline||a.header,url:a.url&&a.url.startsWith('http')?a.url:'https://announcements.asx.com.au'+(a.url||''),sensitive:!!a.isSensitive,src:'ASX'}));
+    if(items.length){annCache={at:Date.now(),data:items};return items}throw new Error('markit empty')}catch(e){errors.push(String(e.message||e))}
+  if(annCache.data)return annCache.data;throw new Error(errors.join(' | '))}
+// ---- ASIC aggregated short positions (daily CSV, UTF-16LE, T+4 lag) ----
+let shortCache={at:0,data:null};
+function ymd(d){return d.toISOString().slice(0,10).replace(/-/g,'')}
+async function shorts(){
+  if(Date.now()-shortCache.at<3600000&&shortCache.data)return shortCache.data;
+  const tried=[];for(let i=0;i<14;i++){const d=new Date(Date.now()-i*86400000);if(d.getUTCDay()===0||d.getUTCDay()===6)continue;
+    const url=`https://download.asic.gov.au/short-selling/RR${ymd(d)}-001-SSDailyAggShortPos.csv`;tried.push(ymd(d));
+    try{const r=await fetch(url,{headers:{'User-Agent':UA}});if(!r.ok)continue;const buf=Buffer.from(await r.arrayBuffer());
+      let txt=(buf[0]===0xff&&buf[1]===0xfe)?buf.toString('utf16le'):buf.toString('utf8');
+      const line=txt.split(/\r?\n/).find(l=>{const c=l.split('\t');return c[2]&&c[2].trim().toUpperCase()===SYMBOL});
+      if(!line)continue;const c=line.split('\t').map(x=>x.trim());
+      const out={asOf:c[0],product:c[1],code:c[2],shortPositions:+c[3].replace(/[^0-9.]/g,''),onIssue:+c[4].replace(/[^0-9.]/g,''),pct:+c[5].replace(/[^0-9.]/g,''),file:url,source:'ASIC'};
+      shortCache={at:Date.now(),data:out};return out}catch(e){}}
+  throw new Error('no ASIC file found for '+tried.join(','))}
+
+export default async function handler(req,res){
+  const h=req.headers.authorization||'';let ok=false;
+  if(h.startsWith('Basic ')){try{ok=Buffer.from(h.slice(6),'base64').toString()===`${USER}:${PASS}`}catch(e){}}
+  if(!ok){res.setHeader('WWW-Authenticate','Basic realm="Kallor Insights"');return res.status(401).send('Kallor Insights — sign in')}
+  const url=new URL(req.url,'http://x');
+  if(url.pathname==='/api/quote'){res.setHeader('Cache-Control','no-store');
+    try{return res.status(200).json(await quote())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
+  if(url.pathname==='/api/announcements'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await announcements())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
+  if(url.pathname==='/api/shorts'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await shorts())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
+  if(url.pathname==='/health')return res.status(200).send('ok');
+  const file=path.join(process.cwd(),'index.html');
+  res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');
+  return res.status(200).send(fs.readFileSync(file,'utf8'))}
