@@ -31,7 +31,7 @@ async function announcements(){
     if(!r.ok)throw new Error('asx.com.au '+r.status);const j=await r.json();const items=(j.data||[]).map(a=>({t:(a.document_release_date||a.document_date||'').slice(0,10),headline:a.header,url:a.url||('https://www.asx.com.au'+(a.relative_url||'')),sensitive:!!a.market_sensitive,src:'ASX'}));
     if(items.length){annCache={at:Date.now(),data:items};return items}throw new Error('asx.com.au empty')}catch(e){errors.push(String(e.message||e))}
   try{const r=await fetch(`https://asx.api.markitdigital.com/asx-research/1.0/companies/${SYMBOL.toLowerCase()}/announcements?count=25&expand=true`,{headers:{'User-Agent':UA,Accept:'application/json'}});
-    if(!r.ok)throw new Error('markit '+r.status);const j=await r.json();const items=((j.data&&j.data.items)||[]).map(a=>({t:(a.documentReleaseDate||a.date||'').slice(0,10),headline:a.headline||a.header,url:a.url&&a.url.startsWith('http')?a.url:'https://announcements.asx.com.au'+(a.url||''),sensitive:!!a.isSensitive,src:'ASX'}));
+    if(!r.ok)throw new Error('markit '+r.status);const j=await r.json();const items=((j.data&&j.data.items)||[]).map(a=>{const ids=(a.documentKey||'').split('-').pop();const t=a.date?new Date(a.date).toLocaleDateString('en-CA',{timeZone:'Australia/Sydney'}):'';return{t,headline:a.headline||a.header,url:a.url&&a.url.startsWith('http')?a.url:(ids?'https://www.asx.com.au/asx/v2/statistics/displayAnnouncement.do?display=pdf&idsId='+ids:'https://www.asx.com.au/markets/company/'+SYMBOL.toLowerCase()),sensitive:!!(a.isPriceSensitive||a.isSensitive),type:a.announcementType||'',src:'ASX'}});
     if(items.length){annCache={at:Date.now(),data:items};return items}throw new Error('markit empty')}catch(e){errors.push(String(e.message||e))}
   if(annCache.data)return annCache.data;throw new Error(errors.join(' | '))}
 // ---- ASIC aggregated short positions (daily CSV, UTF-16LE, T+4 lag) ----
@@ -40,14 +40,15 @@ function ymd(d){return d.toISOString().slice(0,10).replace(/-/g,'')}
 async function shorts(){
   if(Date.now()-shortCache.at<3600000&&shortCache.data)return shortCache.data;
   const tried=[];for(let i=0;i<14;i++){const d=new Date(Date.now()-i*86400000);if(d.getUTCDay()===0||d.getUTCDay()===6)continue;
-    const url=`https://download.asic.gov.au/short-selling/RR${ymd(d)}-001-SSDailyAggShortPos.csv`;tried.push(ymd(d));
-    try{const r=await fetch(url,{headers:{'User-Agent':UA}});if(!r.ok)continue;const buf=Buffer.from(await r.arrayBuffer());
-      let txt=(buf[0]===0xff&&buf[1]===0xfe)?buf.toString('utf16le'):buf.toString('utf8');
-      const line=txt.split(/\r?\n/).find(l=>{const c=l.split('\t');return c[2]&&c[2].trim().toUpperCase()===SYMBOL});
-      if(!line)continue;const c=line.split('\t').map(x=>x.trim());
-      const out={asOf:c[0],product:c[1],code:c[2],shortPositions:+c[3].replace(/[^0-9.]/g,''),onIssue:+c[4].replace(/[^0-9.]/g,''),pct:+c[5].replace(/[^0-9.]/g,''),file:url,source:'ASIC'};
-      shortCache={at:Date.now(),data:out};return out}catch(e){}}
-  throw new Error('no ASIC file found for '+tried.join(','))}
+    const stamp=ymd(d);const url=`https://download.asic.gov.au/short-selling/RR${stamp}-001-SSDailyAggShortPos.csv`;
+    try{const r=await fetch(url,{headers:{'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128 Safari/537.36',Accept:'text/csv,*/*'}});
+      if(!r.ok){tried.push(stamp+':'+r.status);continue}const buf=Buffer.from(await r.arrayBuffer());
+      const txt=(buf[0]===0xff&&buf[1]===0xfe)?buf.toString('utf16le'):buf.toString('utf8');
+      const line=txt.split(/\r?\n/).find(l=>{const c=l.split(/[,\t]/);return c.length>=5&&c[c.length-4].trim().toUpperCase()===SYMBOL});
+      if(!line){tried.push(stamp+':no-row');continue}const c=line.split(/[,\t]/).map(x=>x.trim());const n=c.length;
+      const out={asOf:stamp.slice(0,4)+'-'+stamp.slice(4,6)+'-'+stamp.slice(6,8),product:c.slice(0,n-4).join(','),code:c[n-4],shortPositions:+c[n-3].replace(/[^0-9.]/g,''),onIssue:+c[n-2].replace(/[^0-9.]/g,''),pct:+c[n-1].replace(/[^0-9.]/g,''),file:url,source:'ASIC'};
+      shortCache={at:Date.now(),data:out};return out}catch(e){tried.push(stamp+':'+String(e.message||e).slice(0,60))}}
+  throw new Error('no ASIC file found: '+tried.join(' | '))}
 
 export default async function handler(req,res){
   const h=req.headers.authorization||'';let ok=false;
