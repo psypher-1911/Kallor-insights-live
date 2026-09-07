@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kallor - The TMC Four - the money</title>
+<style>
+:root{--paper:#F2F0EA;--panel:#FBFAF6;--slate:#1B2E3C;--brass:#C7A24E;--brassd:#8F6C22;--steel:#3E6A8A;--line:#D8DEE3;--muted:#677184;--ink:#40525E;--good:#23684F;--warn:#B0522F;
+ --rev:#8A939E;--revd:#5C6875;--src:#C9CED4;--prof:#7FBF9A;--profd:#23684F;--cost:#E39A8C;--costd:#B0522F;--est:#C7A24E}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--slate);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+header{background:#121c27;color:#fff;padding:14px 26px;border-bottom:3px solid var(--brass);display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.hb{font-weight:800;letter-spacing:.09em;font-size:15px}.hb b{color:var(--brass)}.hs{font:600 10px Consolas,monospace;letter-spacing:.12em;color:#d8b457}
+main{max-width:1240px;margin:auto;padding:22px 22px 80px}
+.why{background:#fff;border:1.5px solid var(--brass);border-radius:12px;padding:12px 16px;margin:0 0 18px}.why b{display:block;font:800 10px Consolas,monospace;letter-spacing:.14em;color:var(--brassd);margin-bottom:4px}.why p{margin:0;font-size:14px;line-height:1.5}
+.co{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px 10px;margin:0 0 22px;overflow:hidden}
+.co.est{border:1.5px dashed var(--brass);background:#FFFCF3}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.logo{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;color:#fff;font-weight:800;letter-spacing:.06em;font-size:15px;white-space:nowrap}
+.logo small{font-weight:600;letter-spacing:.1em;font-size:9px;opacity:.85}
+.t{font-family:Georgia,serif;font-size:22px;font-weight:600}.t small{font:600 11px Consolas,monospace;letter-spacing:.1em;color:var(--muted);margin-left:8px}
+.badge{margin-left:auto;font:800 10px Consolas,monospace;letter-spacing:.12em;padding:4px 10px;border-radius:20px;border:1.5px solid var(--good);color:var(--good)}
+.badge.e{border-color:var(--warn);color:var(--warn)}
+.kp{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 10px;font-size:12.5px;color:var(--ink)}.kp b{font:700 12px Consolas,monospace;color:var(--slate)}
+.kp span{padding-right:18px;border-right:1px solid var(--line)}.kp span:last-child{border:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}.chip{font:700 10px Consolas,monospace;letter-spacing:.06em;padding:3px 8px;border-radius:6px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+svg{width:100%;height:auto;display:block;overflow:visible}
+.nl{font:600 11.5px -apple-system,"Segoe UI",Arial,sans-serif;fill:var(--slate)}.nv{font:700 12px Consolas,monospace;fill:var(--slate)}.ns{font:600 9.5px Consolas,monospace;fill:var(--muted)}
+.nl.p,.nv.p{fill:var(--profd)}.nl.c,.nv.c{fill:var(--costd)}.nl.mini{font-size:10.5px}.nv.mini{font-size:11px}.ns.mini{font-size:8.5px}
+.fn{font-size:11.5px;color:var(--muted);line-height:1.55;margin:8px 0 4px}.fn b{color:var(--slate)}
+.read{font-size:13.5px;line-height:1.55;margin:4px 0 8px;padding:10px 12px;background:#fff;border-left:3px solid var(--steel);border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th{font:800 10px Consolas,monospace;letter-spacing:.1em;color:var(--brassd);text-align:left;padding:10px 12px;border-bottom:1.5px solid var(--line);background:#FBF8EE}
+td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}td.n{font:700 12.5px Consolas,monospace;text-align:right;white-space:nowrap}td.e{color:var(--brassd)}
+h2{font-family:Georgia,serif;font-size:20px;font-weight:600;margin:26px 0 8px}
+.leg{display:flex;gap:16px;font:600 10.5px Consolas,monospace;color:var(--muted);margin:0 0 12px;flex-wrap:wrap}.leg i{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+.tip{position:fixed;pointer-events:none;background:#121c27;color:#fff;font:600 11.5px Consolas,monospace;padding:6px 9px;border-radius:6px;display:none;z-index:9;max-width:320px}
+@media(max-width:700px){.t{font-size:18px}.badge{margin-left:0}}
+
+.mockbar{background:#FFF4D6;border-bottom:2px dashed var(--brass);padding:8px 26px;font:600 11.5px Consolas,monospace;color:#5a4410}.mockbar code{color:var(--brassd)}
+.hbk{margin-left:auto;color:#d8b457;font:700 10px Consolas,monospace;letter-spacing:.12em;text-decoration:none}
+.chk,.imp{background:#fff;border:1.5px solid var(--steel);border-radius:12px;padding:0 14px;margin:0 0 14px}.imp{border-color:var(--brass)}
+.chk summary,.imp summary{list-style:none;display:flex;gap:10px;align-items:center;padding:10px 0;cursor:pointer;user-select:none}.chk summary::-webkit-details-marker,.imp summary::-webkit-details-marker{display:none}
+.chk summary b{font:700 10px Consolas,monospace;letter-spacing:.12em;color:var(--steel);white-space:nowrap}.imp summary b{font:800 10px Consolas,monospace;letter-spacing:.14em;color:var(--brassd);white-space:nowrap}
+.nx{flex:1;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chk summary em,.imp summary em{font-style:normal;color:var(--steel)}.chk[open] summary,.imp[open] summary{border-bottom:1px solid var(--line)}
+.ci{display:flex;gap:9px;align-items:flex-start;padding:5px 0;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer}.ci:first-of-type{border-top:0}.ci input{margin-top:3px;width:16px;height:16px}.ci.on span{color:var(--muted);text-decoration:line-through}
+.ci i{font:700 8px Consolas,monospace;letter-spacing:.08em;color:var(--good);font-style:normal;border:1px solid var(--good);border-radius:20px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.impbody textarea{width:100%;margin-top:10px;font:12px Consolas,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--panel)}.impacts{display:flex;gap:12px;align-items:center;padding:8px 0 12px}
+.btn{border:0;border-radius:8px;padding:7px 14px;font:800 11px Consolas,monospace;cursor:pointer;text-decoration:none}.btn.land{background:var(--slate);color:#fff}.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}.done{font:600 12px Consolas,monospace;color:var(--brassd)}
+.heavy{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:8px 0 6px}@media(max-width:800px){.heavy{grid-template-columns:1fr}}
+.hcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.hcard h3{font:800 10px Consolas,monospace;letter-spacing:.12em;color:var(--brassd);margin:0 0 8px}.hcard p{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.45}
+.bar{display:grid;grid-template-columns:110px 1fr 54px;gap:8px;align-items:center;font-size:12px;padding:4px 0}.bar i{display:block;height:12px;border-radius:3px;background:var(--steel)}.bar i.e{background:var(--est);opacity:.7}.bar i.b{background:transparent;border:1.5px dashed var(--line)}.bar b{font:700 11.5px Consolas,monospace;text-align:right}.bar span{color:var(--ink)}
+pre{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:11.5px Consolas,monospace;white-space:pre-wrap;line-height:1.45;color:var(--ink)}
+.fill{background:#fff;border:1.5px solid var(--brass);border-radius:12px;padding:12px 14px;margin:8px 0 16px}.fill h3{font:800 10px Consolas,monospace;letter-spacing:.12em;color:var(--brassd);margin:0 0 6px}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}.tab{font:800 10.5px Consolas,monospace;letter-spacing:.1em;padding:8px 14px;border-radius:20px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none}.tab.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+.view.hide{display:none}
+.ruler{background:#fff;border:1.5px solid var(--steel);border-radius:12px;padding:12px 16px;margin:0 0 14px}.ruler>b{display:block;font:800 10px Consolas,monospace;letter-spacing:.14em;color:var(--steel);margin-bottom:8px}.rules{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;font-size:13px;line-height:1.45}.rules span i{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--steel);color:#fff;font:800 10px Consolas,monospace;text-align:center;line-height:16px;font-style:normal;margin-right:6px}.rules input{width:58px;font:700 12px Consolas,monospace;border:1px solid var(--brass);border-radius:6px;padding:2px 4px;background:#FFF9E8}
+@media(max-width:800px){.rules{grid-template-columns:1fr}}
+.grid5{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 6px}@media(max-width:1100px){.grid5{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.grid5{grid-template-columns:1fr}}
+.mini{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 8px 6px}.mini.est{border:1.5px dashed var(--brass);background:#FFFCF3}.mh{display:flex;flex-direction:column;gap:4px;align-items:flex-start;margin:0 4px 6px;font:600 10px Consolas,monospace;color:var(--muted)}
+.logo.sm{font-size:11px;padding:3px 8px;letter-spacing:.08em}
+table.cmp td.n{text-align:right}table.cmp td.u{color:#9aa3b0;text-align:right;font:700 12.5px Consolas,monospace}table.cmp tr.sec td{background:#FBF8EE;font:800 9.5px Consolas,monospace;letter-spacing:.12em;color:var(--brassd);padding:6px 12px}table.cmp td.e{color:var(--brassd);text-align:right;font:700 12.5px Consolas,monospace}
+.gold{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:800px){.gold{grid-template-columns:1fr}}.gold p{margin:0;background:#fff;border-left:4px solid var(--brass);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.5}
+</style></head><body>
+<header><div class="hb">KALLOR <b>&middot; THE TMC FOUR</b></div><div class="hs">WHO IS HEAVY &middot; FCTG &middot; CTM &middot; AMEX GBT &middot; BCD</div><a class="hbk" href="/tmc">&larr; COMMAND CENTRE</a></header>
+<main>
+<style>.tmcbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}.tmcbar a{font:800 10px Consolas,monospace;letter-spacing:.1em;padding:7px 12px;border-radius:20px;border:1.5px solid #D8DEE3;background:#fff;color:#40525E;text-decoration:none}.tmcbar a:hover{border-color:#C7A24E}.tmcnote{font:12px system-ui;color:#6B7A86;margin:0 0 12px}</style><div class="tmcbar"><a href="/tmc">COMMAND CENTRE</a><a href="/tmc/money">THE MONEY &middot; SANKEYS</a><a href="http://127.0.0.1:47617/_tmc/import">IMPORT A REPORT</a><a href="/">&larr; LIVE &middot; CTD</a></div><p class="tmcnote">Numbers are a snapshot of the Kallor TMC-FINANCIALS store taken 07 Sept 2026. New reports are imported on the PC, then this site is re-published.</p>
+<div class="why"><b>WHY YOU SHOULD CARE</b><p>Four companies sell the same thing - a managed trip - and keep between 4 cents and 8 cents of every dollar a client spends. Where the rest goes is the whole argument: who is carrying too many people, too much technology, too much head office. Read left to right: what clients buy &rarr; what the company keeps &rarr; what it spends it on &rarr; what is left.</p></div>
+<nav class="tabs"><a class="tab on" data-v="compare">COMPARE &middot; SAME RULER</a><a class="tab" data-v="fctg">FLIGHT CENTRE</a><a class="tab" data-v="ctm">CTM</a><a class="tab" data-v="gbt">AMEX GBT</a><a class="tab" data-v="bcd">BCD</a><a class="tab" data-v="fill">FILL-OUT FILE</a></nav>
+
+<!-- ============ COMPARE ============ -->
+<div class="view" id="v-compare">
+<div class="ruler"><b>THE RULER &middot; HOW THEY ARE MADE COMPARABLE</b>
+<div class="rules">
+ <span><i>1</i> Every bar is <b>% of revenue</b>. Revenue = 100 for each company, so size drops out and shape remains.</span>
+ <span><i>2</i> Dollars, where shown, are <b>US$ at an assumed A$1 = US$<input id="fx" type="number" step="0.01" value="0.66"></input></b> - a ruled input, not a fact. Change it and the table recomputes.</span>
+ <span><i>3</i> Lines are mapped to five common names: <b>People &middot; Technology &middot; Sales &amp; marketing &middot; Other &middot; Undisclosed</b>. A company that does not split a line gets an honest grey <b>undisclosed</b> band, never a guess.</span>
+ <span><i>4</i> Periods differ (June year vs December year). Shown as reported; a rule on calendarising is on the checklist.</span>
+ <span><i>5</i> Flight Centre is shown twice: the <b>Group</b> (with leisure shops) and the <b>Corporate segment</b> alone - the like-for-like against CTM.</span>
+</div></div>
+
+<div class="leg"><span><i style="background:var(--rev)"></i>REVENUE = 100</span><span><i style="background:var(--prof)"></i>PROFIT</span><span><i style="background:var(--cost)"></i>COST</span><span><i style="background:#E3E6EA;border:1px dashed #9aa3b0"></i>UNDISCLOSED</span><span><i style="background:var(--est);opacity:.6"></i>ESTIMATE</span></div>
+<div class="grid5">
+ <div class="mini"><div class="mh"><span class="logo sm" style="background:#E4002B">FLIGHT CENTRE</span><span>Group &middot; FY26</span></div><div id="m-fctg"></div></div>
+ <div class="mini"><div class="mh"><span class="logo sm" style="background:#E4002B">FLIGHT CENTRE</span><span>Corporate segment only &middot; FY26</span></div><div id="m-fctgc"></div></div>
+ <div class="mini"><div class="mh"><span class="logo sm" style="background:#0B2545">CTM</span><span>FY26</span></div><div id="m-ctm"></div></div>
+ <div class="mini"><div class="mh"><span class="logo sm" style="background:#006FCF">AMEX GBT</span><span>FY2025</span></div><div id="m-gbt"></div></div>
+ <div class="mini est"><div class="mh"><span class="logo sm" style="background:#2E7D32">BCD</span><span>2025 &middot; modelled</span></div><div id="m-bcd"></div></div>
+</div>
+
+<h2>The ladder - same lines, five columns</h2>
+<table class="cmp" id="cmp"></table>
+<div class="fn">% of revenue unless marked. "EBITDA" is each company's own headline measure (FLT statutory EBITDA; CTM underlying; GBT adjusted; BCD modelled) - the line below it, <b>pre-tax margin</b>, is the one that is truly the same for all. A dash is undisclosed, never zero.</div>
+
+<h2>Per head</h2>
+<table class="cmp" id="cmph"></table>
+<div class="fn">Headcount as each reports it (FLT full-time equivalents; GBT "over 27,000"; BCD "15,000+"; CTM not in the release). US$ at the ruled rate above.</div>
+
+<h2>The gold so far</h2>
+<div class="gold">
+ <p><b>Take rate is the biggest lever, and CTM has the smallest.</b> CTM keeps 6.8c of each TTV dollar; GBT 7.5c; FLT Corporate 9.3c. Lifting CTM to GBT's rate on A$9.8B is ~A$70M of revenue - more than half of underlying EBITDA - with no cost taken out.</p>
+ <p><b>Corporate travel is a 20%+ EBITDA business when run at scale.</b> FLT Corporate 21.9%, GBT adjusted 20%. CTM's 17% underlying is the gap to close; its pre-tax 3.8% says most of the leak is below EBITDA (remediation, interest, D&amp;A) - a one-off problem, not a structural one, if the remediation ends.</p>
+ <p><b>Technology is where the four disagree most.</b> GBT spends 19% of revenue on it, FLT 9% (group, incl. shops). Whichever CTM reports decides the AI-to-CM argument: at 9% the pitch is "automate the people line"; at 19% it is "we already spend it - make it show".</p>
+ <p><b>People per revenue dollar is unknown for exactly the two pure TMCs.</b> GBT buries it in cost of revenue; CTM's is in the Financial Report. That single line - people % of revenue, CTM vs GBT - is the first thing the import door should fill.</p>
+</div>
+</div><!-- /compare -->
+
+<div class="view hide" id="v-indep">
+<div class="leg"><span><i style="background:var(--src)"></i>WHAT CLIENTS BUY</span><span><i style="background:var(--rev)"></i>REVENUE</span><span><i style="background:var(--prof)"></i>PROFIT</span><span><i style="background:var(--cost)"></i>COST</span><span><i style="background:var(--est);opacity:.6"></i>ESTIMATE (BCD)</span></div>
+
+<!-- ============ FLIGHT CENTRE ============ -->
+<section class="co" id="fctg">
+ <div class="top"><span class="logo" style="background:#E4002B">FLIGHT CENTRE <small>TRAVEL GROUP</small></span><span class="t">FY26 income statement<small>YEAR TO 30 JUNE 2026 &middot; A$ MILLIONS</small></span><span class="badge">REPORTED &middot; AUDITED</span></div>
+ <div class="chips"><span class="chip">FCM</span><span class="chip">Corporate Traveller</span><span class="chip">Flight Centre</span><span class="chip">Travel Associates</span><span class="chip">Scott Dunn</span><span class="chip">Cruiseabout</span><span class="chip">StudentUniverse</span><span class="chip">Discova</span><span class="chip">Envoyage</span></div>
+ <div class="kp" id="kp-fctg"></div>
+ <div id="s-fctg"></div>
+ <div class="read"><b>Read:</b> corporate is now the bigger half of TTV (A$12.7B vs leisure A$12.6B) and the more profitable one (segment EBITDA A$257M vs A$210M). People are 51% of revenue. "Other expenses" hides A$262M of communications &amp; IT and A$113M of consulting &amp; outsourcing - the two lines to pull apart next.</div>
+ <div class="fn">Source: FLT Appendix 4E and 2026 Annual Report (26 Aug 2026), statement of profit or loss, notes A1 (segments), A4 (other expenses), F1. EBITDA A$430.6M excludes interest income of A$23.9M (shown as its own inflow to profit). Segment revenue is revenue from contracts with customers; "Global HQ" carries touring, hotels and cruise operations.</div>
+</section>
+
+<!-- ============ CTM ============ -->
+<section class="co" id="ctm">
+ <div class="top"><span class="logo" style="background:#0B2545">CTM <small>CORPORATE TRAVEL MANAGEMENT</small></span><span class="t">FY26 income statement<small>YEAR TO 30 JUNE 2026 &middot; A$ MILLIONS</small></span><span class="badge">REPORTED &middot; RELEASE ONLY</span></div>
+ <div class="chips"><span class="chip">Lightning</span><span class="chip">Scout</span><span class="chip">Sleep Space</span><span class="chip">Data Hub</span><span class="chip">Event Travel Management</span><span class="chip">1000 Mile Travel Group</span></div>
+ <div class="kp" id="kp-ctm"></div>
+ <div id="s-ctm"></div>
+ <div class="read"><b>Read:</b> the four regions earn A$142M of underlying EBITDA; A$28M of that is eaten above them (corporate cost), and another A$88M goes to depreciation, interest and the non-underlying items (remediation, governance) before A$25M of pre-tax profit is left. Europe is the swing: revenue +34% to A$114M and EBITDA from -A$1M to +A$25M. <b>The cost lines are not in the release</b> - the full FY26 Financial Report (lodged 1 Sep) has employee, technology and other expenses; drop it in and this chart fills.</div>
+ <div class="fn">Source: CTD ASX releases 27 Aug 2026 (FY25 and 1HY26) and 1 Sep 2026 (FY26 results, Appendix 4E). Regional revenue is disclosed only for ANZ (A$181.4M) and Europe (A$113.7M); North America + Asia (A$374.8M) is the remainder. Underlying opex (A$556.3M) = revenue &amp; other income - underlying EBITDA; the A$88.4M between underlying EBITDA and statutory PBT is D&amp;A + net interest + non-underlying items, not split in the release. Tax A$5.8M = PBT A$25.2M - NPAT A$19.4M.</div>
+</section>
+
+<!-- ============ AMEX GBT ============ -->
+<section class="co" id="gbt">
+ <div class="top"><span class="logo" style="background:#006FCF">AMEX GBT <small>GLOBAL BUSINESS TRAVEL GROUP</small></span><span class="t">FY2025 income statement<small>YEAR TO 31 DEC 2025 &middot; US$ MILLIONS</small></span><span class="badge">REPORTED &middot; 10-K</span></div>
+ <div class="chips"><span class="chip">Amex GBT Neo</span><span class="chip">Egencia</span><span class="chip">CWT</span><span class="chip">Ovation</span><span class="chip">Amex GBT Select</span><span class="chip">Meetings &amp; Events</span></div>
+ <div class="kp" id="kp-gbt"></div>
+ <div id="s-gbt"></div>
+ <div class="read"><b>Read:</b> this is the cleanest cost map of the four because the 10-K splits it by function. Technology &amp; content alone is 19% of revenue (US$527M) - more than sales &amp; marketing. Operating margin is 5%; the 20% "adjusted EBITDA" is what is left before D&amp;A, restructuring, stock comp and integration. Net income US$111M leans on US$135M of non-cash gains (earnout revaluation US$96M, CWT stake remeasurement US$39M).</div>
+ <div class="fn">Source: Global Business Travel Group, Inc. Form 10-K for the year ended 31 Dec 2025 - consolidated statements of operations (F-7), note on revenue (travel vs products &amp; professional services), key metrics (TTV, adjusted EBITDA). Gross profit here = revenue - cost of revenue (US$1,633M); the company's "Gross Profit" of US$1,562M also deducts part of D&amp;A. "Other non-operating" = loss on debt extinguishment (2) + other loss (29).</div>
+</section>
+
+<!-- ============ BCD ============ -->
+<section class="co est" id="bcd">
+ <div class="top"><span class="logo" style="background:#2E7D32">BCD <small>TRAVEL</small></span><span class="t">2025 income statement<small>CALENDAR 2025 &middot; US$ MILLIONS &middot; PRIVATE</small></span><span class="badge e">ESTIMATE &middot; NOT REPORTED</span></div>
+ <div class="chips"><span class="chip">TripSource</span><span class="chip">SolutionSource</span><span class="chip">DecisionSource</span><span class="chip">Advito</span><span class="chip">BCD Meetings &amp; Events</span></div>
+ <div class="kp" id="kp-bcd"></div>
+ <div id="s-bcd"></div>
+ <div class="read"><b>Read:</b> only two numbers here are BCD's own - US$24.4B of sales and 15,000+ people. Everything else is Amex GBT's shape laid over BCD's size: revenue at GBT's 7.5% yield on TTV, each cost at GBT's share of revenue. That gives ~US$122K of revenue per head against GBT's ~US$101K, which is plausible for a leaner, privately held TMC - but it is a model, not a fact. The band (US$1.66B-1.83B) uses CTM's 6.8% yield as the low end.</div>
+ <div class="fn">Source of the two stated figures: BCD Group company page (2025 sales US$24.4 billion; 15,000+ team members; 170+ countries). Modelling basis: yield 7.5% (Amex GBT FY25) with 6.8% (CTM FY26) as the floor; cost shares of revenue from Amex GBT FY25: cost of revenue 40%, technology &amp; content 19%, sales &amp; marketing 16%, G&amp;A 11%, D&amp;A 7%, operating income 7% (GBT's 4.8% plus the 1.9% GBT spends on restructuring, which is not modelled for BCD). No tax, interest or net income is modelled - BCD's capital structure is not public. Replace any node the moment a real figure lands.</div>
+</section>
+
+</div><!-- /indep -->
+<div class="view hide" id="v-old">
+<h2>Where the money goes - side by side</h2>
+<table>
+<thead><tr><th>MEASURE</th><th>FLIGHT CENTRE FY26 (A$)</th><th>CTM FY26 (A$)</th><th>AMEX GBT FY25 (US$)</th><th>BCD 2025 (US$, modelled)</th></tr></thead>
+<tbody>
+<tr><td>TTV</td><td class="n">25,676M</td><td class="n">9,800M</td><td class="n">36,258M</td><td class="n">24,400M <i>stated</i></td></tr>
+<tr><td>Revenue</td><td class="n">2,854.9M</td><td class="n">669.9M</td><td class="n">2,718M</td><td class="n e">~1,830M</td></tr>
+<tr><td>Revenue kept per $ of TTV</td><td class="n">11.1c (corporate 9.3c)</td><td class="n">6.8c</td><td class="n">7.5c</td><td class="n e">7.5c assumed</td></tr>
+<tr><td>People cost as % of revenue</td><td class="n">51%</td><td class="n">not in release</td><td class="n">not split by nature</td><td class="n e">-</td></tr>
+<tr><td>Technology / IT as % of revenue</td><td class="n">9% (comms &amp; IT)</td><td class="n">not in release</td><td class="n">19% (tech &amp; content)</td><td class="n e">19% assumed</td></tr>
+<tr><td>EBITDA margin (as each reports it)</td><td class="n">15% statutory / 16% underlying</td><td class="n">17% underlying</td><td class="n">20% adjusted</td><td class="n e">~12% modelled EBITDA</td></tr>
+<tr><td>Operating / pre-tax margin</td><td class="n">7.5% PBT</td><td class="n">3.8% PBT</td><td class="n">4.8% operating</td><td class="n e">~5% operating</td></tr>
+<tr><td>Net profit margin</td><td class="n">5.2%</td><td class="n">2.9%</td><td class="n">4.1%</td><td class="n e">-</td></tr>
+<tr><td>Revenue per employee</td><td class="n">A$231K (12,365 FTE)</td><td class="n">headcount not in release</td><td class="n">~US$101K (27,000+)</td><td class="n e">~US$122K (15,000+)</td></tr>
+<tr><td>TTV per employee</td><td class="n">A$2.1M</td><td class="n">-</td><td class="n">~US$1.3M</td><td class="n e">~US$1.6M</td></tr>
+</tbody></table>
+<h2>Who is heavy - the view to rule on</h2>
+<div class="heavy">
+ <div class="hcard"><h3>PEOPLE &middot; % OF REVENUE</h3>
+  <div class="bar"><span>Flight Centre</span><i style="width:51%"></i><b>51%</b></div>
+  <div class="bar"><span>Amex GBT</span><i class="b" style="width:40%"></i><b>n/a</b></div>
+  <div class="bar"><span>CTM</span><i class="b" style="width:30%"></i><b>blank</b></div>
+  <div class="bar"><span>BCD</span><i class="b" style="width:30%"></i><b>blank</b></div>
+  <p>GBT does not split by nature - "cost of revenue" (40%) is mostly counsellors. CTM's line arrives with the Financial Report.</p></div>
+ <div class="hcard"><h3>TECHNOLOGY &middot; % OF REVENUE</h3>
+  <div class="bar"><span>Amex GBT</span><i style="width:19%"></i><b>19%</b></div>
+  <div class="bar"><span>Flight Centre</span><i style="width:9%"></i><b>9%</b></div>
+  <div class="bar"><span>BCD</span><i class="e" style="width:19%"></i><b>~19%</b></div>
+  <div class="bar"><span>CTM</span><i class="b" style="width:30%"></i><b>blank</b></div>
+  <p>FLT's number is "communications &amp; IT"; GBT's is "technology &amp; content". Not the same line - the rule below decides how they compare.</p></div>
+ <div class="hcard"><h3>REVENUE PER HEAD</h3>
+  <div class="bar"><span>Flight Centre</span><i style="width:100%"></i><b>A$231K</b></div>
+  <div class="bar"><span>BCD</span><i class="e" style="width:53%"></i><b>~US$122K</b></div>
+  <div class="bar"><span>Amex GBT</span><i style="width:44%"></i><b>US$101K</b></div>
+  <div class="bar"><span>CTM</span><i class="b" style="width:30%"></i><b>blank</b></div>
+  <p>FLT includes leisure shops. Currencies as reported; a rule on FX (or per-TTV instead) is one of the checklist items.</p></div>
+</div>
+
+</div><!-- /old -->
+<div class="view hide" id="v-fill">
+<h2 id="fill">The fill-out file</h2>
+<div class="fill"><h3>WHAT THIS IS</h3><p style="margin:0;font-size:13.5px;line-height:1.5">One line per number. This is the store as first filled - the live copy is <code>_RUN THESE\TMC-FINANCIALS.json</code> and grows through <a href="http://127.0.0.1:47617/_tmc/import">the import door</a>. It is the store the room draws from (<code>_RUN THESE\TMC-FINANCIALS.json</code>) and also the shape a frontier pass sends back. Fill a blank, give the page, and the chart above changes. <b>value = null</b> means "not known" and stays a gap on the chart - never a guess. <b>status</b> is reported / estimated / blank.</p></div>
+<pre id="fillfile">loading the live store…</pre>
+
+<h2 id="pack">The pack to carry (frontier prompt)</h2>
+<pre>You are extracting an income statement from the attached annual/financial report for the Kallor TMC Four board.
+Return ONLY JSON in this shape: { "company": "&lt;fctg|ctm|gbt|bcd&gt;", "period": "&lt;e.g. FY26&gt;", "currency": "&lt;AUD|USD&gt;",
+  "lines": [ { "key": "&lt;one of the keys below&gt;", "value": &lt;number in millions, or null&gt;, "page": "&lt;page or note reference&gt;", "note": "&lt;how it is described in the report&gt;" } ] }
+Keys: ttv, revenue, revenue_&lt;segment or region&gt;, other_income, interest_income, employee_benefits, sales_marketing, cost_of_revenue, cost_of_sales,
+technology, consulting, agent_fees, occupancy, other_expenses, remediation, restructuring, general_admin, ebitda, ebitda_underlying, ebitda_&lt;region&gt;,
+depreciation, finance_costs, operating_income, pbt, tax, npat|net_income, headcount.
+Rules: every value must be a number printed in the report (state the page). If a line is not disclosed, value is null - never estimate. Use the reported currency, in millions.
+Do not net or combine lines unless the report does. Include regional or segment revenue and EBITDA wherever a note gives them.</pre>
+<div class="fn">Paste the reply into <a href="http://127.0.0.1:47617/_tmc/import">/_tmc/import</a>. It lands as provisional; a line with a page beats a line without one; a real value replaces an estimate; null never overwrites a number.</div>
+</div><!-- /fill -->
+<div class="fn">Currencies are as reported and not converted - the ratios are the comparison, not the dollars. FLT's people and TTV-per-head figures include the leisure business (shops), which pulls them away from a pure corporate TMC. CTM's cost split and headcount come from the full Financial Report, not the results release supplied.</div>
+</main>
+<div class="tip" id="tip"></div>
+<div class="tip" id="tip"></div>
+<script src="/tmc/kallor-sankey.js"></script>
+<script>
+(function(){
+var S=KallorSankey, tip=document.getElementById('tip');
+var META={fctg:{unit:'A$',est:false,name:'Flight Centre Group',period:'FY26',cur:'AUD'},fctgc:{unit:'A$',est:false,name:'Flight Centre Corporate',period:'FY26',cur:'AUD'},ctm:{unit:'A$',est:false,name:'CTM',period:'FY26',cur:'AUD'},gbt:{unit:'US$',est:false,name:'Amex GBT',period:'FY2025',cur:'USD'},bcd:{unit:'US$',est:true,name:'BCD (modelled)',period:'2025',cur:'USD'}};
+function money(v){ return v>=10000? 'US$'+(v/1000).toFixed(1)+'B' : 'US$'+Math.round(v).toLocaleString('en-US')+'M'; }
+function p1(v){ return (Math.round(v*10)/10)+'%'; }
+function fx(){ var v=parseFloat(document.getElementById('fx').value); return isNaN(v)?0.66:v; }
+function usd(v,cur){ if(v==null) return null; return cur==='AUD'? v*fx() : v; }
+function cell(v,f,est){ if(v==null) return '<td class="u">-</td>'; return '<td class="'+(est?'e':'n')+'">'+f(v)+'</td>'; }
+var DOC=null, LINES={};
+function linesFor(co){ // fctgc = flight centre corporate segment, carried as *_corporate keys on fctg
+ if(co==='fctgc'){ return DOC.lines.filter(function(l){return l.company==='fctg'&&/_corpseg$/.test(l.key);}).map(function(l){ var c=JSON.parse(JSON.stringify(l)); c.key=l.key.replace(/_corpseg$/,''); return c; }); }
+ return DOC.lines.filter(function(l){return l.company===co&&!/_corpseg$/.test(l.key);});
+}
+function kp(co){ var K=S.byKey(LINES[co]), u=META[co].unit, out=[];
+ if(K.ttv!=null) out.push('TTV <b>'+S.fmt(K.ttv,u)+'</b>'); if(K.revenue!=null) out.push('Revenue <b>'+S.fmt(K.revenue,u)+'</b>'); if(K.ttv&&K.revenue) out.push('Revenue / TTV <b>'+p1(K.revenue/K.ttv*100)+'</b>');
+ var eb=K.ebitda_underlying!=null?['Underlying EBITDA',K.ebitda_underlying]:K.ebitda_adjusted!=null?['Adj. EBITDA',K.ebitda_adjusted]:K.ebitda!=null?['EBITDA',K.ebitda]:null; if(eb) out.push(eb[0]+' <b>'+S.fmt(eb[1],u)+'</b> '+p1(eb[1]/K.revenue*100)+' margin');
+ var net=K.npat!=null?K.npat:K.net_income; if(net!=null) out.push('Net profit <b>'+S.fmt(net,u)+'</b>'); if(K.operating_income!=null&&net==null) out.push('Operating income <b>'+S.fmt(K.operating_income,u)+'</b>');
+ if(K.headcount!=null) out.push('People <b>'+Math.round(K.headcount).toLocaleString('en-US')+'</b>'); else out.push('People <b class="u">not in the release</b>');
+ var blanks=LINES[co].filter(function(l){return l.value==null;}).length, prov=LINES[co].filter(function(l){return l.status==='provisional';}).length; out.push('Store <b>'+LINES[co].length+' lines</b>'+(blanks?' · '+blanks+' blank':'')+(prov?' · '+prov+' provisional':''));
+ return out.map(function(x){return '<span>'+x+'</span>';}).join('');
+}
+function tables(){
+ var ks=['fctg','fctgc','ctm','gbt','bcd'], head='<tr><th>LINE</th>'+ks.map(function(k){return '<th>'+META[k].name.toUpperCase()+'<br><span style="color:var(--muted)">'+META[k].period+'</span></th>';}).join('')+'</tr>';
+ var N={}; ks.forEach(function(k){ N[k]=S.norm(LINES[k],{est:META[k].est}); N[k].K=S.byKey(LINES[k]); });
+ var rows=[]; function sec(t){ rows.push('<tr class="sec"><td colspan="6">'+t+'</td></tr>'); }
+ function row(label,f,fm){ rows.push('<tr><td>'+label+'</td>'+ks.map(function(k){ var v=null; try{ v=f(N[k],N[k].K,META[k]); }catch(e){} return cell(v,fm,META[k].est); }).join('')+'</tr>'); }
+ sec('SIZE - US$ AT THE RULED RATE');
+ row('TTV',function(n,K,m){return usd(K.ttv,m.cur);},money); row('Revenue',function(n,K,m){return usd(K.revenue,m.cur);},money);
+ row('Revenue kept per $ of TTV',function(n,K){return K.ttv?K.revenue/K.ttv*100:null;},function(v){return (Math.round(v*10)/10)+'c';});
+ sec('WHERE REVENUE GOES - % OF REVENUE');
+ [['people','People'],['tech','Technology'],['sm','Sales & marketing'],['other','Other opex'],['undisc','Undisclosed opex']].forEach(function(o){ row(o[1],function(n,K){return n.shape[o[0]]>0?n.shape[o[0]]/K.revenue*100:null;},p1); });
+ row('Total opex above EBITDA',function(n,K){var t=0;Object.keys(n.shape).forEach(function(x){t+=n.shape[x];});return t/K.revenue*100;},p1);
+ sec('WHAT IS LEFT - % OF REVENUE');
+ row('Headline EBITDA (their own measure)',function(n,K){var e=K.ebitda_adjusted!=null?K.ebitda_adjusted:K.ebitda_underlying!=null?K.ebitda_underlying:K.ebitda!=null?K.ebitda:n.ebitda;return e/K.revenue*100;},p1);
+ row('EBITDA on one definition (revenue + other income - opex)',function(n,K){return n.ebitda/K.revenue*100;},p1);
+ row('D&A',function(n,K){return K.depreciation!=null?K.depreciation/K.revenue*100:null;},p1);
+ row('Pre-tax margin',function(n,K){return K.pbt!=null?K.pbt/K.revenue*100:null;},p1);
+ row('Net margin',function(n,K){var v=K.npat!=null?K.npat:K.net_income;return v!=null?v/K.revenue*100:null;},p1);
+ document.getElementById('cmp').innerHTML='<thead>'+head+'</thead><tbody>'+rows.join('')+'</tbody>';
+ rows=[]; sec('PER HEAD - US$ AT THE RULED RATE');
+ row('Headcount',function(n,K){return K.headcount;},function(v){return Math.round(v).toLocaleString('en-US');});
+ row('Revenue per head',function(n,K,m){return K.headcount?usd(K.revenue,m.cur)/K.headcount*1000:null;},function(v){return 'US$'+Math.round(v/1000)+'K';});
+ row('TTV per head',function(n,K,m){return K.headcount&&K.ttv?usd(K.ttv,m.cur)/K.headcount*1000:null;},function(v){return 'US$'+(v/1e6).toFixed(2)+'M';});
+ row('People cost per head',function(n,K,m){return K.headcount&&K.employee_benefits!=null?usd(K.employee_benefits,m.cur)/K.headcount*1000:null;},function(v){return 'US$'+Math.round(v/1000)+'K';});
+ row('EBITDA per head',function(n,K,m){return K.headcount?usd(n.ebitda,m.cur)/K.headcount*1000:null;},function(v){return 'US$'+Math.round(v/1000)+'K';});
+ document.getElementById('cmph').innerHTML='<thead>'+head+'</thead><tbody>'+rows.join('')+'</tbody>';
+}
+function draw(){
+ ['fctg','ctm','gbt','bcd'].forEach(function(co){ var spec=S.fromLines(LINES[co],{unit:META[co].unit,est:META[co].est}); var el=document.getElementById('s-'+co); if(spec) S.render(el,spec); else el.innerHTML='<p class="fn">Not enough in the store to draw this yet - revenue and an EBITDA line are the minimum.</p>'; document.getElementById('kp-'+co).innerHTML=kp(co); });
+ ['fctg','fctgc','ctm','gbt','bcd'].forEach(function(k){ var n=S.norm(LINES[k],{est:META[k].est}); var el=document.getElementById('m-'+k); if(n) S.render(el,n); else el.innerHTML='<p class="fn">not enough in the store</p>'; });
+ tables();
+}
+fetch('/tmc/store').then(function(r){return r.json();}).then(function(d){ DOC=d; ['fctg','fctgc','ctm','gbt','bcd'].forEach(function(k){ LINES[k]=linesFor(k); }); draw(); document.getElementById('fillfile').textContent=JSON.stringify({kind:d.kind,what_this_is:d.what_this_is,updated:d.updated,companies:d.companies,lines:d.lines},null,1); }).catch(function(e){ document.getElementById('s-fctg').innerHTML='<p class="fn">Could not read the store: '+e+'</p>'; });
+document.getElementById('fx').addEventListener('input',function(){ if(DOC) tables(); });
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){ t.onclick=function(){ Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');}); t.classList.add('on'); var v=t.getAttribute('data-v');
+ document.getElementById('v-compare').classList.toggle('hide',v!=='compare'); document.getElementById('v-fill').classList.toggle('hide',v!=='fill'); document.getElementById('v-old').classList.add('hide');
+ var ind=document.getElementById('v-indep'); ind.classList.toggle('hide',!(v==='fctg'||v==='ctm'||v==='gbt'||v==='bcd'));
+ ['fctg','ctm','gbt','bcd'].forEach(function(k){ document.getElementById(k).style.display=(v===k)?'':'none'; }); }; });
+['fctg','ctm','gbt','bcd'].forEach(function(k){ document.getElementById(k).style.display='none'; });
+document.addEventListener('mousemove',function(e){ var t=e.target.closest&&e.target.closest('[data-tip]'); if(!t){tip.style.display='none';return;} tip.textContent=t.getAttribute('data-tip'); tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px'; });
+})();
+</script>
+</body></html>

@@ -60,6 +60,18 @@ export default async function handler(req,res){
   if(url.pathname==='/api/announcements'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await announcements())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
   if(url.pathname==='/api/shorts'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await shorts())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
   if(url.pathname==='/health')return res.status(200).send('ok');
+  // ---- THE TMC FOUR (ported from the Library room /_tmc, owner ask 7 Sep 2026) ----
+  // WHAT: serves the command centre, the money page, its Sankey script and the financials snapshot from the tmc/ folder.
+  // WHY: the CEO walk-past screen was a single CTD page; the owner wants the full TMC Four depth on the public site too.
+  //      Everything here sits behind the same sign-in as the home screen (checked above).
+  if(url.pathname.startsWith('/tmc')){
+    const TMC={'/tmc':['command-centre.html','text/html; charset=utf-8'],'/tmc/money':['money.html','text/html; charset=utf-8'],
+      '/tmc/kallor-sankey.js':['kallor-sankey.js','text/javascript; charset=utf-8'],'/tmc/store':['financials.json','application/json; charset=utf-8']};
+    const hit=TMC[url.pathname.replace(/\/$/,'')||'/tmc'];
+    if(!hit)return res.status(404).send('not part of The TMC Four');
+    res.setHeader('Content-Type',hit[1]);res.setHeader('Cache-Control','no-cache');
+    return res.status(200).send(fs.readFileSync(path.join(process.cwd(),'tmc',hit[0]),'utf8'))}
+
   const file=path.join(process.cwd(),'index.html');
   res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Cache-Control','no-cache');
   return res.status(200).send(fs.readFileSync(file,'utf8'))}
