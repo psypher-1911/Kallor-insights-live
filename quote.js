@@ -12,7 +12,7 @@ async function yahoo(){
   const meta=res.meta||{},q=res.indicators?.quote?.[0]||{};let pv=0,v=0,hi=-Infinity,lo=Infinity;
   (q.close||[]).forEach((c,i)=>{const vol=q.volume?.[i]||0;if(c!=null&&vol>0){pv+=c*vol;v+=vol}if(q.high?.[i]!=null)hi=Math.max(hi,q.high[i]);if(q.low?.[i]!=null)lo=Math.min(lo,q.low[i])});
   const price=meta.regularMarketPrice??[...(q.close||[])].reverse().find(x=>x!=null);if(!price)throw new Error('yahoo no price');
-  return{source:'Yahoo Finance',price,volume:meta.regularMarketVolume??v,vwap:v?pv/v:null,high:isFinite(hi)?hi:null,low:isFinite(lo)?lo:null,prevClose:meta.chartPreviousClose??meta.previousClose??null,asOf:meta.regularMarketTime?meta.regularMarketTime*1000:Date.now()}}
+  const open=(q.open||[]).find(x=>x!=null)??null;return{source:'Yahoo Finance',price,open,volume:meta.regularMarketVolume??v,vwap:v?pv/v:null,high:isFinite(hi)?hi:null,low:isFinite(lo)?lo:null,prevClose:meta.chartPreviousClose??meta.previousClose??null,asOf:meta.regularMarketTime?meta.regularMarketTime*1000:Date.now()}}
 async function asx(){
   const r=await fetch(`https://asx.api.markitdigital.com/asx-research/1.0/companies/${SYMBOL.toLowerCase()}/header`,{headers:{'User-Agent':UA,Accept:'application/json'}});
   if(!r.ok)throw new Error('asx '+r.status);const d=(await r.json()).data||{};if(!d.priceLast)throw new Error('asx no price');
@@ -50,21 +50,24 @@ async function shorts(){
       shortCache={at:Date.now(),data:out};return out}catch(e){tried.push(stamp+':'+String(e.message||e).slice(0,60))}}
   throw new Error('no ASIC file found: '+tried.join(' | '))}
 
-// ---- DAILY HISTORY since the return (owner 8 Sep 2026: "the price and how it flowed") ----
-// WHAT: one daily bar per trading day from 3 Sep 2026 (the first day back): close, shares traded, day high/low. Yahoo first, ASX header
-//       has no history so there is no second source - if Yahoo is down the page keeps its baked figures and says so.
-// WHY: the front page's price-flow strip; cached 5 minutes because a daily bar only changes once a day (plus today's running bar).
+// ---- HISTORY since the return (owner 8 Sep 2026: "the price and how it flowed" / "see how clean that is" - Yahoo's 5D view) ----
+// WHAT: two series from Yahoo, one call each: (1) DAILY bars from 3 Sep 2026 (the first day back) - close, shares traded, high, low - for the
+//       session table; (2) INTRADAY 15-minute closes over the last 5 trading days - for the shaded price line, so it has real shape like
+//       Yahoo's chart instead of three dots. WHY cached 5 minutes: enough for a walk-past screen, kind to Yahoo. If Yahoo is down the page
+//       keeps its baked daily figures and says so; there is no second source for history.
 let histCache={at:0,data:null};
+async function yahooChart(interval,range){const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}.AX?interval=${interval}&range=${range}&includePrePost=false`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+  if(!r.ok)throw new Error('yahoo '+r.status);const res=(await r.json()).chart?.result?.[0];if(!res)throw new Error('yahoo empty');return res}
+const sydDay=t=>new Date(t*1000).toLocaleDateString('en-CA',{timeZone:'Australia/Sydney'}); // YYYY-MM-DD in Sydney
 async function history(){
   if(Date.now()-histCache.at<300000&&histCache.data)return histCache.data;
-  const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}.AX?interval=1d&range=3mo&includePrePost=false`,{headers:{'User-Agent':UA,Accept:'application/json'}});
-  if(!r.ok)throw new Error('yahoo '+r.status);const j=await r.json();const res=j.chart?.result?.[0];if(!res)throw new Error('yahoo empty');
-  const ts=res.timestamp||[],q=res.indicators?.quote?.[0]||{};const out=[];
-  ts.forEach((t,i)=>{const c=q.close?.[i];const v=q.volume?.[i]||0;if(c==null||!v)return; // skip suspended / empty days
-    const d=new Date(t*1000).toLocaleDateString('en-CA',{timeZone:'Australia/Sydney'}); // YYYY-MM-DD in Sydney
-    if(d<'2026-09-03')return;out.push({d,close:+c,vol:+v,hi:q.high?.[i]??null,lo:q.low?.[i]??null})});
-  if(!out.length)throw new Error('no bars since 2026-09-03');
-  const data={source:'Yahoo Finance daily',sessions:out,fetchedAt:Date.now()};histCache={at:Date.now(),data};return data}
+  const d=await yahooChart('1d','3mo');const dq=d.indicators?.quote?.[0]||{};const daily=[];
+  (d.timestamp||[]).forEach((t,i)=>{const c=dq.close?.[i],v=dq.volume?.[i]||0;if(c==null||!v)return;const day=sydDay(t);if(day<'2026-09-03')return; // skip the suspended year
+    daily.push({d:day,close:+c,vol:+v,hi:dq.high?.[i]??null,lo:dq.low?.[i]??null})});
+  if(!daily.length)throw new Error('no daily bars since 2026-09-03');
+  let intraday=[];try{const m=await yahooChart('15m','5d');const mq=m.indicators?.quote?.[0]||{};
+    (m.timestamp||[]).forEach((t,i)=>{const c=mq.close?.[i];if(c==null)return;const day=sydDay(t);if(day<'2026-09-03')return;intraday.push({t:t*1000,d:day,close:+c,vol:+(mq.volume?.[i]||0)})})}catch(e){}
+  const data={source:'Yahoo Finance',sessions:daily,intraday,fetchedAt:Date.now()};histCache={at:Date.now(),data};return data}
 
 export default async function handler(req,res){
   const h=req.headers.authorization||'';let ok=false;
