@@ -378,7 +378,7 @@ body.focus .focusbar{display:flex}
 <section class="grid">
   <div class="panel">
     <div class="ph"><h2>Market</h2>
-      <div class="ranges" id="ranges"><button data-i="5" data-r="1D" class="on">1D</button><button data-i="30" data-r="5D">5D</button><button data-i="D" data-r="1M">1M</button><button data-i="D" data-r="6M">6M</button><button data-i="W" data-r="12M">1Y</button><button data-i="W" data-r="60M">5Y</button><a href="https://www.tradingview.com/symbols/ASX-CTD/" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;align-self:center;margin-left:6px">TradingView ↗</a></div>
+      <div class="ranges" id="ranges"><button data-i="5" data-r="1D">1D</button><button data-i="30" data-r="5D" class="on">5D</button><button data-i="D" data-r="1M">1M</button><button data-i="D" data-r="6M">6M</button><button data-i="W" data-r="12M">1Y</button><button data-i="W" data-r="60M">5Y</button><button id="styleBtn" style="margin-left:10px">Candles</button><a href="https://www.tradingview.com/symbols/ASX-CTD/" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:10px;align-self:center;margin-left:6px">TradingView ↗</a></div>
     </div>
     <div class="chart" id="chart"><div class="fb">loading TradingView · ASX:CTD</div></div>
     <div class="ruler" id="ruler"><div class="lbl" style="margin-bottom:4px">What the company is worth at each price (146.33m shares, verified)</div></div>
@@ -494,13 +494,19 @@ const LOGOS={"ctm": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADmCAYAA
 const TVQ='https://s.tradingview.com/embed-widget/';
 function tvIframe(kind,cfg,h){const w=document.createElement('div');w.className='tradingview-widget-container';w.style.height=h;const inner=document.createElement('div');inner.className='tradingview-widget-container__widget';inner.style.height='100%';w.appendChild(inner);const sc=document.createElement('script');sc.type='text/javascript';sc.src='https://s3.tradingview.com/external-embedding/embed-widget-'+kind+'.js';sc.async=true;sc.text=JSON.stringify(Object.assign({height:parseInt(h)||100},cfg));w.appendChild(sc);return w}
 $('#tvHero').appendChild(tvIframe('symbol-info',{symbol:'ASX:CTD',width:'100%',locale:'en',colorTheme:'light',isTransparent:true},'110px'));
-let range={i:'5',r:'1D'};
+let range={i:'30',r:'5D'};
+/* CHART LOOK (owner 8 Sep 2026: "I want to see share price"). WHAT: chartStyle '3' = a plain shaded price line; '1' = candlesticks.
+   WHY: candles at 1-minute steps read as noise to a non-trader; a line answers "what is the price and how has it moved" at a glance.
+   The Candles button flips it for anyone who wants the detail; the choice is remembered on this device. */
+let chartStyle=ls.get('chartStyle')||'3';
+function setChartStyle(v){chartStyle=v;ls.set('chartStyle',v);const b=$('#styleBtn');if(b){b.textContent=v==='3'?'Candles':'Line';}chart()}
 function chart(){const c=$('#chart');[...c.querySelectorAll('.tradingview-widget-container,iframe')].forEach(e=>e.remove());
  const w=document.createElement('div');w.className='tradingview-widget-container';w.style.height='100%';const inner=document.createElement('div');inner.className='tradingview-widget-container__widget';inner.style.height='100%';w.appendChild(inner);
  const sc=document.createElement('script');sc.type='text/javascript';sc.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';sc.async=true;
- sc.text=JSON.stringify({autosize:true,symbol:'ASX:CTD',interval:range.i,range:range.r,timezone:'Australia/Sydney',theme:'light',style:'1',locale:'en',withdateranges:true,hide_side_toolbar:true,allow_symbol_change:false,save_image:false,studies:['STD;Volume'],support_host:'https://www.tradingview.com'});
+ sc.text=JSON.stringify({autosize:true,symbol:'ASX:CTD',interval:range.i,range:range.r,timezone:'Australia/Sydney',theme:'light',style:chartStyle,locale:'en',withdateranges:true,hide_side_toolbar:true,allow_symbol_change:false,save_image:false,studies:['STD;Volume'],support_host:'https://www.tradingview.com'});
  w.appendChild(sc);c.appendChild(w)}
 chart();
+$('#styleBtn').addEventListener('click',()=>setChartStyle(chartStyle==='3'?'1':'3'));$('#styleBtn').textContent=chartStyle==='3'?'Candles':'Line';
 $('#ranges').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;range={i:b.dataset.i,r:b.dataset.r};[...$('#ranges').children].forEach(x=>x.classList.toggle('on',x===b));chart()});
 [['ASX:CTD','Corporate Travel Mgmt','ctm','#12305c'],['ASX:FLT','Flight Centre (FCM)','flt','#c8102e'],['NYSE:GBTG','Amex GBT','gbt','#016fd0']].forEach(([s,w,m,col])=>{
  const d=document.createElement('div');d.className='peer';d.innerHTML='<div class="lg" style="background:#fff;border:1px solid var(--line)"><img src="'+LOGOS[m]+'" alt="'+w+'" style="width:30px;height:30px;object-fit:contain"></div><div><div class="s">'+s+'</div><div class="w">'+w+'</div></div>';
