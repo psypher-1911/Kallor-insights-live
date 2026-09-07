@@ -276,19 +276,28 @@ body.focus .focusbar{display:flex}
   .hero h1{font-size:24px}.chart{height:300px}.bal .r{grid-template-columns:1fr 1fr}
 }
 
-/* PRICE FLOW STRIP (owner 8 Sep 2026: "they just wanted to know the price and how it flowed"). WHAT: one always-on strip at the top with the
-   last price in big type and a small drawing of every session since CTD came back. WHY: the TradingView chart and the live feed both need the
-   internet to co-operate; this strip draws from figures baked into the page, so the basic price is on screen even when everything else fails. */
-.pf{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:18px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg2)}
-.pf .px{font-family:var(--disp);font-weight:700;font-size:56px;line-height:.95;color:var(--navy)}
-.pf .chg{font-family:var(--mono);font-size:13px;margin-top:6px}.pf .chg.dn{color:#b3261e}.pf .chg.up{color:#1b7f4b}
+/* PRICE FLOW STRIP (owner 8 Sep 2026: "they just wanted to know the price and how it flowed"; then "see how clean that is" - Yahoo's
+   summary). WHAT: the top of the screen is laid out like a quote page: price and change in big type, an "at close" line, a key-stats grid,
+   and one shaded price line over the days since CTD came back with the shares traded as faint bars underneath. WHY: the TradingView panel
+   and the live feed both need the internet to co-operate; this strip has the last known figures baked in, so the basic price is always on
+   screen, and it upgrades itself to live Yahoo data when that answers. Nothing here is stretched: the drawing is sized to its box in pixels. */
+.pf{display:grid;grid-template-columns:minmax(300px,2fr) 3fr;gap:0 28px;padding:16px 20px 12px;border-bottom:1px solid var(--line);background:#fff}
 .pf .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
-.pf .st{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:6px}
-.pf svg{width:100%;height:150px;display:block}
-.pf .tbl{display:grid;grid-template-columns:repeat(4,auto);gap:2px 14px;font-family:var(--mono);font-size:11px;margin-top:6px;color:var(--ink2)}
-.pf .tbl b{color:var(--ink)}
-.pf .read{font-size:12px;color:var(--ink2);margin-top:6px;line-height:1.4}
-@media(max-width:760px){.pf{grid-template-columns:1fr}.pf .px{font-size:44px}}
+.pf .nm{font-size:13px;color:var(--ink2);margin-top:2px}
+.pf .pxrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:6px}
+.pf .px{font-family:var(--disp);font-weight:700;font-size:48px;line-height:1;color:var(--ink);letter-spacing:-.01em}
+.pf .chg{font-family:var(--disp);font-weight:700;font-size:22px;line-height:1}.pf .chg.dn{color:#c62828}.pf .chg.up{color:#1b7f4b}.pf .chg.fl{color:var(--mute)}
+.pf .st{font-size:12px;color:var(--mute);margin-top:6px}
+.pf .kv{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;margin-top:14px;border-top:1px solid var(--line)}
+.pf .kv div{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+.pf .kv b{font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap}
+.pf .ch{position:relative;margin-top:6px}
+.pf .ch svg{width:100%;height:190px;display:block}
+.pf .tabs{display:flex;gap:4px;align-items:center;margin-top:8px}
+.pf .tabs span{font-family:var(--mono);font-size:10.5px;padding:3px 9px;border-radius:12px;background:var(--bg2);color:var(--ink2)}
+.pf .tabs span b{color:var(--ink)}
+.pf .read{font-size:12.5px;color:var(--ink2);margin-top:8px;line-height:1.45}
+@media(max-width:820px){.pf{grid-template-columns:1fr}.pf .px{font-size:42px}.pf .ch svg{height:160px}}
 </style>
 </head>
 <body>
@@ -322,15 +331,16 @@ body.focus .focusbar{display:flex}
 <!-- PRICE FLOW STRIP: the plain answer to "what is the price and how has it moved" - see .pf notes in the style block. -->
 <section class="pf" id="pf">
   <div>
-    <div class="lbl">ASX:CTD · last price</div>
-    <div class="px num" id="pfPx">—</div>
-    <div class="chg" id="pfChg">—</div>
+    <div class="lbl">ASX · delayed quote · AUD</div>
+    <div class="nm">Corporate Travel Management Limited (CTD)</div>
+    <div class="pxrow"><span class="px num" id="pfPx">—</span><span class="chg" id="pfChg">—</span></div>
     <div class="st" id="pfSt">—</div>
+    <div class="kv" id="pfKv"></div>
   </div>
   <div>
-    <div class="lbl">How it has flowed since it came back · close (line) and shares traded (bars)</div>
-    <svg id="pfSvg" viewBox="0 0 600 150" preserveAspectRatio="none" aria-label="price and volume by session"></svg>
-    <div class="tbl" id="pfTbl"></div>
+    <div class="lbl">Share price since it came back · shares traded shown as bars</div>
+    <div class="ch"><svg id="pfSvg" aria-label="share price and shares traded since 3 September 2026"></svg></div>
+    <div class="tabs" id="pfTbl"></div>
     <div class="read" id="pfRead"></div>
   </div>
 </section>
@@ -583,41 +593,68 @@ document.addEventListener('keydown',e=>{if(e.target.matches('input'))return;if(e
 setFocus(focus);setAdv(adv);
 setInterval(()=>{chart();$('#fbStamp').textContent='refreshed '+now()},300000);
 /* ---------- PRICE FLOW STRIP (owner 8 Sep 2026) ----------
-   WHAT: SESSIONS is every trading day since CTD came back: close price, shares traded, day range. It is written into the page as a fact table
-   (source noted per row) so the strip works with no internet. WHY the live overlay: when /api/history answers, its daily bars REPLACE the baked
-   rows for the same dates and add newer days, so the strip is live when it can be and honest when it cannot. */
+   WHAT: SESSIONS = every trading day since CTD came back (close, shares traded, day range), baked in with a source per row so the strip works
+   with no internet. INTRA = 15-minute closes for the last 5 trading days, live from /api/history, which gives the line its shape.
+   WHY the overlay: when /api/history answers, its daily bars REPLACE the baked rows for the same dates and add newer days - live when it can be,
+   honest ("baked figures") when it cannot. */
 const SESSIONS=[
  {d:'2026-09-03',close:2.32,vol:24.9e6,hi:null,lo:null,src:'first day back; Motley Fool AU / Travel Monitor 4 Sep'},
  {d:'2026-09-04',close:2.25,vol:11.5e6,hi:null,lo:null,src:'owner scan 7 Sep'},
  {d:'2026-09-07',close:2.17,vol:6.55e6,hi:2.41,lo:2.15,src:'owner scan 7 Sep'}
 ];
-let pfLive=false;
-function pfDay(d){return new Date(d+'T12:00:00+10:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}
-function drawFlow(){const S=SESSIONS.slice(-12);if(!S.length)return;
- // Last price block: live quote if we have one, else the last session close (and say which).
+let INTRA=[],pfLive=false;
+const fmtM=v=>v>=1e6?(v/1e6).toFixed(1)+'m':v>=1e3?(v/1e3).toFixed(0)+'k':String(v);
+function pfDay(d,long){return new Date(d+'T12:00:00+10:00').toLocaleDateString('en-AU',long?{weekday:'long',day:'numeric',month:'long'}:{weekday:'short',day:'numeric',month:'short'})}
+function drawFlow(){const S=SESSIONS.slice(-15);if(!S.length)return;
+ // ---- Price block: live quote if we have one, else the last session close (and say which) ----
  const q=(typeof lastGood!=='undefined'&&lastGood&&lastGood.price)?lastGood:null;const last=S[S.length-1];const prev=S.length>1?S[S.length-2]:null;
- const px=q?q.price:last.close;const ref=q?(q.prevClose||last.close):(prev?prev.close:null);
- $('#pfPx').textContent='$'+px.toFixed(2);
- if(ref){const c=px-ref,pc=c/ref*100;const e=$('#pfChg');e.textContent=(c>=0?'+':'')+c.toFixed(2)+' ('+(pc>=0?'+':'')+pc.toFixed(1)+'%) vs previous close $'+ref.toFixed(2);e.className='chg '+(c<0?'dn':c>0?'up':'')}
- $('#pfSt').textContent=q?('live · '+q.source+' · delayed ~20 min'+(q.high&&q.low?' · day range $'+q.low.toFixed(2)+'–$'+q.high.toFixed(2):'')):('close '+pfDay(last.d)+(last.lo&&last.hi?' · day range $'+last.lo.toFixed(2)+'–$'+last.hi.toFixed(2):'')+' · '+(last.vol/1e6).toFixed(1)+'m shares · '+(pfLive?'live history':'baked figures - live feed off'))+' · suspended a year ago at $16.07';
- // The drawing: bars = shares traded (grey), line = close (navy). Scales are per-strip so three sessions still read clearly.
- const W=600,H=150,padL=8,padR=8,top=18,base=118;const n=S.length;const step=(W-padL-padR)/n;
- const closes=S.map(x=>x.close),vols=S.map(x=>x.vol);const cmin=Math.min(...closes)*0.97,cmax=Math.max(...closes)*1.03;const vmax=Math.max(...vols)||1;
- const X=i=>padL+step*(i+0.5),Y=v=>top+(base-top)*(1-(v-cmin)/(cmax-cmin));
- let g='';S.forEach((x,i)=>{const bh=(base-top)*0.9*(x.vol/vmax);g+='<rect x="'+(X(i)-step*0.28)+'" y="'+(base-bh)+'" width="'+(step*0.56)+'" height="'+bh+'" fill="#d9dee5"/>';
-   g+='<text x="'+X(i)+'" y="'+(base+14)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a8794">'+pfDay(x.d)+'</text>';
-   g+='<text x="'+X(i)+'" y="'+(base+27)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a8794">'+(x.vol/1e6).toFixed(1)+'m</text>'});
- g+='<polyline fill="none" stroke="#12305c" stroke-width="2.5" points="'+S.map((x,i)=>X(i)+','+Y(x.close)).join(' ')+'"/>';
- S.forEach((x,i)=>{g+='<circle cx="'+X(i)+'" cy="'+Y(x.close)+'" r="4" fill="#12305c"/><text x="'+X(i)+'" y="'+(Y(x.close)-9)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#0f1a2a">$'+x.close.toFixed(2)+'</text>'});
- $('#pfSvg').innerHTML=g;
- // Session table under the drawing (every number the drawing used), so it can be checked line by line.
- $('#pfTbl').innerHTML='<span>session</span><span>close</span><span>shares</span><span>vs prior</span>'+S.map((x,i)=>{const p=i?S[i-1].close:null;const ch=p?((x.close/p-1)*100):null;return '<span>'+pfDay(x.d)+'</span><b>$'+x.close.toFixed(2)+'</b><span>'+(x.vol/1e6).toFixed(1)+'m</span><span>'+(ch==null?'first day back':(ch>=0?'+':'')+ch.toFixed(1)+'%')+'</span>'}).join('');
+ const px=q?q.price:last.close;const ref=q?(q.prevClose||(prev?prev.close:null)):(prev?prev.close:null);
+ $('#pfPx').textContent=px.toFixed(2);
+ const e=$('#pfChg');if(ref){const c=px-ref,pc=c/ref*100;e.textContent=(c>0?'+':'')+c.toFixed(2)+' ('+(c>0?'+':'')+pc.toFixed(2)+'%)';e.className='chg '+(c<0?'dn':c>0?'up':'fl')}else{e.textContent='';}
+ const open=q&&q.marketOpen;
+ $('#pfSt').textContent=q?((open?'Trading now · ':'At close: ')+new Date(q.asOf).toLocaleString('en-AU',{timeZone:'Australia/Sydney',day:'numeric',month:'long',hour:'numeric',minute:'2-digit'})+' AEST · '+q.source+', ~20 min delayed'):('At close: '+pfDay(last.d,true)+' · baked figures, live feed off');
+ // ---- Key stats (the Yahoo grid, only the lines we can back) ----
+ const hi=q&&q.high?q.high:last.hi,lo=q&&q.low?q.low:last.lo,vol=q?q.volume:last.vol;const cap=px*CO.sharesOut;
+ const KV=[['Previous close',ref?'$'+ref.toFixed(2):'—'],['Open',q&&q.open?'$'+q.open.toFixed(2):'—'],["Day's range",hi&&lo?'$'+lo.toFixed(2)+' – $'+hi.toFixed(2):'—'],['Volume',fmtM(vol)],
+  ['Market cap',fm(cap)],['Since it came back',S.length+' session'+(S.length>1?'s':'')+' · '+((px/S[0].close-1)*100).toFixed(1)+'%'],['Before suspension','$'+CO.refPrice.toFixed(2)+' · '+((px/CO.refPrice-1)*100).toFixed(0)+'%'],['Shares on issue','146.33m']];
+ $('#pfKv').innerHTML=KV.map(([k,v])=>'<div><span>'+k+'</span><b>'+v+'</b></div>').join('');
+ // ---- The drawing, sized in real pixels so nothing stretches ----
+ const svg=$('#pfSvg');const W=Math.max(320,svg.clientWidth||svg.parentNode.clientWidth||600),H=svg.clientHeight||190;svg.setAttribute('viewBox','0 0 '+W+' '+H);
+ const padR=52,padL=6,top=14,base=H-22,volH=Math.round((base-top)*0.22);
+ // Points: the 15-minute line when we have it, else the daily closes. Each point knows its day so the day labels and dividers line up.
+ const P=INTRA.length>3?INTRA.map(x=>({d:x.d,v:x.close,vol:x.vol})):S.map(x=>({d:x.d,v:x.close,vol:x.vol}));
+ const n=P.length;const X=i=>padL+(W-padL-padR)*(n>1?i/(n-1):0.5);
+ const vals=P.map(p=>p.v);let vmin=Math.min(...vals),vmax=Math.max(...vals);const pad=(vmax-vmin||0.1)*0.12;vmin-=pad;vmax+=pad;
+ const Y=v=>top+(base-volH-top)*(1-(v-vmin)/(vmax-vmin));
+ const down=P[n-1].v<P[0].v;const col=down?'#c62828':'#1b7f4b';
+ // Day groups: one label + divider per trading day; volume bars drawn per day so they read as "shares traded that day".
+ const days=[];P.forEach((p,i)=>{const g=days[days.length-1];if(g&&g.d===p.d){g.to=i;g.vol+=p.vol}else days.push({d:p.d,from:i,to:i,vol:p.vol})});
+ const dayVol=g=>{const s=S.find(x=>x.d===g.d);return s?s.vol:g.vol};const vmaxD=Math.max(...days.map(dayVol))||1;const intra=INTRA.length>3;
+ let g='<defs><linearGradient id="pfFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".28"/><stop offset="1" stop-color="'+col+'" stop-opacity=".02"/></linearGradient></defs>';
+ // horizontal guide lines + right-hand price labels (4 ticks)
+ for(let k=0;k<4;k++){const v=vmin+(vmax-vmin)*k/3;const y=Y(v);g+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y+'" y2="'+y+'" stroke="#e3e7ec" stroke-width="1"/><text x="'+(W-padR+8)+'" y="'+(y+4)+'" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#7a8794">'+v.toFixed(2)+'</text>'}
+ // volume bars per day (faint), day dividers and day labels
+ days.forEach((d,k)=>{const x0=X(d.from),x1=X(d.to);const w=intra?Math.max(6,x1-x0):(W-padL-padR)/Math.max(n,1)*0.5;const bh=volH*0.9*(dayVol(d)/vmaxD);
+  g+='<rect x="'+(intra?x0:x0-w/2)+'" y="'+(base-bh)+'" width="'+w+'" height="'+bh+'" fill="#e6eaef"/>';
+  if(k)g+='<line x1="'+x0+'" x2="'+x0+'" y1="'+top+'" y2="'+base+'" stroke="#e3e7ec" stroke-dasharray="2 3"/>';
+  g+='<text x="'+((x0+x1)/2)+'" y="'+(H-6)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#7a8794">'+pfDay(d.d)+'</text>'});
+ // the price line with the shaded area under it
+ const path=P.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ');
+ g+='<path d="'+path+' L'+X(n-1).toFixed(1)+','+(base-volH)+' L'+X(0).toFixed(1)+','+(base-volH)+' Z" fill="url(#pfFill)"/>';
+ g+='<path d="'+path+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/>';
+ // last price: dashed guide + a pill on the right, like a quote page
+ const ly=Y(P[n-1].v);g+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+ly+'" y2="'+ly+'" stroke="'+col+'" stroke-dasharray="3 3" stroke-width="1"/>';
+ g+='<rect x="'+(W-padR+3)+'" y="'+(ly-9)+'" width="'+(padR-6)+'" height="18" rx="3" fill="'+col+'"/><text x="'+(W-padR/2)+'" y="'+(ly+4)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="700" fill="#fff">'+P[n-1].v.toFixed(2)+'</text>';
+ svg.innerHTML=g;
+ // Session pills under the drawing: every number it used, one pill per day
+ $('#pfTbl').innerHTML=S.map((x,i)=>{const p=i?S[i-1].close:null;const ch=p?((x.close/p-1)*100):null;return '<span>'+pfDay(x.d)+' · <b>$'+x.close.toFixed(2)+'</b> · '+fmtM(x.vol)+(ch==null?' · first day back':' · '+(ch>=0?'+':'')+ch.toFixed(1)+'%')+'</span>'}).join('');
  // One-line read: fact first, then the so-what, then what would change it.
  const v0=S[0].vol,vl=last.vol;const falling=S.length>=3&&S.every((x,i)=>i===0||x.vol<=S[i-1].vol);const lowerLows=S.length>=3&&S.every((x,i)=>i===0||x.close<S[i-1].close);
- $('#pfRead').innerHTML='<b>Fact:</b> volume '+(falling?'has fallen every session':'is not falling cleanly')+' ('+(v0/1e6).toFixed(1)+'m → '+(vl/1e6).toFixed(1)+'m)'+(lowerLows?' while the close is still making lower lows':'')+'. <b>Read:</b> '+(falling&&lowerLows?'a finite pool of trapped and index sellers being worked through - not yet bullish, because nobody has stepped in to hold a level.':falling?'sellers thinning out.':'watch whether the sellers are done.')+' <b>Next tell:</b> does it hold roughly $2.15–$2.20 as volume keeps shrinking? A break lower on another 15–20m-share day says something different.'}
+ $('#pfRead').innerHTML='<b>Fact:</b> volume '+(falling?'has fallen every session':'is not falling cleanly')+' ('+fmtM(v0)+' → '+fmtM(vl)+')'+(lowerLows?' while the close is still making lower lows':'')+'. <b>Read:</b> '+(falling&&lowerLows?'a finite pool of trapped and index sellers being worked through — not yet bullish, because nobody has stepped in to hold a level.':falling?'sellers thinning out.':'watch whether the sellers are done.')+' <b>Next tell:</b> does it hold roughly $2.15–$2.20 as volume keeps shrinking? A break lower on another 15–20m-share day says something different.'}
 async function loadHistory(){try{const r=await fetch('/api/history?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);const h=await r.json();if(!h.sessions||!h.sessions.length)throw new Error('empty');
-  h.sessions.forEach(b=>{const i=SESSIONS.findIndex(x=>x.d===b.d);const row={d:b.d,close:b.close,vol:b.vol,hi:b.hi,lo:b.lo,src:h.source};if(i>=0)SESSIONS[i]=row;else SESSIONS.push(row)});SESSIONS.sort((a,b)=>a.d<b.d?-1:1);pfLive=true}catch(e){}drawFlow()}
-drawFlow();loadHistory();setInterval(loadHistory,300000);
+  h.sessions.forEach(b=>{const i=SESSIONS.findIndex(x=>x.d===b.d);const row={d:b.d,close:b.close,vol:b.vol,hi:b.hi,lo:b.lo,src:h.source};if(i>=0)SESSIONS[i]=row;else SESSIONS.push(row)});SESSIONS.sort((a,b)=>a.d<b.d?-1:1);
+  if(h.intraday&&h.intraday.length>3)INTRA=h.intraday;pfLive=true}catch(e){}drawFlow()}
+drawFlow();loadHistory();setInterval(loadHistory,300000);window.addEventListener('resize',()=>drawFlow());
 /* ---------- LIVE FEED: /api/quote (server-side fetch, cached 20s) ---------- */
 lastGood=null;manual=ls.get('manual')||false;
 const M=$('#manual');M.checked=manual;
