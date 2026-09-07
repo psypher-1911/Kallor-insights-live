@@ -50,6 +50,22 @@ async function shorts(){
       shortCache={at:Date.now(),data:out};return out}catch(e){tried.push(stamp+':'+String(e.message||e).slice(0,60))}}
   throw new Error('no ASIC file found: '+tried.join(' | '))}
 
+// ---- DAILY HISTORY since the return (owner 8 Sep 2026: "the price and how it flowed") ----
+// WHAT: one daily bar per trading day from 3 Sep 2026 (the first day back): close, shares traded, day high/low. Yahoo first, ASX header
+//       has no history so there is no second source - if Yahoo is down the page keeps its baked figures and says so.
+// WHY: the front page's price-flow strip; cached 5 minutes because a daily bar only changes once a day (plus today's running bar).
+let histCache={at:0,data:null};
+async function history(){
+  if(Date.now()-histCache.at<300000&&histCache.data)return histCache.data;
+  const r=await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}.AX?interval=1d&range=3mo&includePrePost=false`,{headers:{'User-Agent':UA,Accept:'application/json'}});
+  if(!r.ok)throw new Error('yahoo '+r.status);const j=await r.json();const res=j.chart?.result?.[0];if(!res)throw new Error('yahoo empty');
+  const ts=res.timestamp||[],q=res.indicators?.quote?.[0]||{};const out=[];
+  ts.forEach((t,i)=>{const c=q.close?.[i];const v=q.volume?.[i]||0;if(c==null||!v)return; // skip suspended / empty days
+    const d=new Date(t*1000).toLocaleDateString('en-CA',{timeZone:'Australia/Sydney'}); // YYYY-MM-DD in Sydney
+    if(d<'2026-09-03')return;out.push({d,close:+c,vol:+v,hi:q.high?.[i]??null,lo:q.low?.[i]??null})});
+  if(!out.length)throw new Error('no bars since 2026-09-03');
+  const data={source:'Yahoo Finance daily',sessions:out,fetchedAt:Date.now()};histCache={at:Date.now(),data};return data}
+
 export default async function handler(req,res){
   const h=req.headers.authorization||'';let ok=false;
   if(h.startsWith('Basic ')){try{ok=Buffer.from(h.slice(6),'base64').toString()===`${USER}:${PASS}`}catch(e){}}
@@ -58,6 +74,7 @@ export default async function handler(req,res){
   if(url.pathname==='/api/quote'){res.setHeader('Cache-Control','no-store');
     try{return res.status(200).json(await quote())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
   if(url.pathname==='/api/announcements'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await announcements())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
+  if(url.pathname==='/api/history'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await history())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
   if(url.pathname==='/api/shorts'){res.setHeader('Cache-Control','no-store');try{return res.status(200).json(await shorts())}catch(e){return res.status(502).json({error:String(e.message||e)})}}
   if(url.pathname==='/health')return res.status(200).send('ok');
   // ---- THE TMC FOUR (ported from the Library room /_tmc, owner ask 7 Sep 2026) ----

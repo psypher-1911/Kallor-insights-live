@@ -275,6 +275,20 @@ body.focus .focusbar{display:flex}
   .h .cols{grid-template-columns:1fr 1fr}.kd{grid-template-columns:repeat(3,1fr)}
   .hero h1{font-size:24px}.chart{height:300px}.bal .r{grid-template-columns:1fr 1fr}
 }
+
+/* PRICE FLOW STRIP (owner 8 Sep 2026: "they just wanted to know the price and how it flowed"). WHAT: one always-on strip at the top with the
+   last price in big type and a small drawing of every session since CTD came back. WHY: the TradingView chart and the live feed both need the
+   internet to co-operate; this strip draws from figures baked into the page, so the basic price is on screen even when everything else fails. */
+.pf{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:18px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.pf .px{font-family:var(--disp);font-weight:700;font-size:56px;line-height:.95;color:var(--navy)}
+.pf .chg{font-family:var(--mono);font-size:13px;margin-top:6px}.pf .chg.dn{color:#b3261e}.pf .chg.up{color:#1b7f4b}
+.pf .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.pf .st{font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:6px}
+.pf svg{width:100%;height:150px;display:block}
+.pf .tbl{display:grid;grid-template-columns:repeat(4,auto);gap:2px 14px;font-family:var(--mono);font-size:11px;margin-top:6px;color:var(--ink2)}
+.pf .tbl b{color:var(--ink)}
+.pf .read{font-size:12px;color:var(--ink2);margin-top:6px;line-height:1.4}
+@media(max-width:760px){.pf{grid-template-columns:1fr}.pf .px{font-size:44px}}
 </style>
 </head>
 <body>
@@ -302,6 +316,22 @@ body.focus .focusbar{display:flex}
     <div class="c"><span class="lbl">The loan</span><span id="brC2">—</span></div>
     <div class="c"><span class="lbl">Forced trade</span><span id="brC3">—</span></div>
     <div class="c"><span class="lbl">Watch</span><span>Volume fading day on day, price back above VWAP, strong closing auctions, and holder notices naming index funds — that is forced selling exhausting. Heavy selling after that is a real repricing.</span></div>
+  </div>
+</section>
+
+<!-- PRICE FLOW STRIP: the plain answer to "what is the price and how has it moved" - see .pf notes in the style block. -->
+<section class="pf" id="pf">
+  <div>
+    <div class="lbl">ASX:CTD · last price</div>
+    <div class="px num" id="pfPx">—</div>
+    <div class="chg" id="pfChg">—</div>
+    <div class="st" id="pfSt">—</div>
+  </div>
+  <div>
+    <div class="lbl">How it has flowed since it came back · close (line) and shares traded (bars)</div>
+    <svg id="pfSvg" viewBox="0 0 600 150" preserveAspectRatio="none" aria-label="price and volume by session"></svg>
+    <div class="tbl" id="pfTbl"></div>
+    <div class="read" id="pfRead"></div>
   </div>
 </section>
 
@@ -426,7 +456,7 @@ const SELLERS=[
  {k:'forced',n:'Funds meeting redemptions',why:'A year without liquidity: money owed to their own investors gets raised at the first exit window.',st:'HIGHLY LIKELY',c:70,sh:[3e6,8e6],dur:'1–3 weeks',ev:1,last:'~12 months without liquidity',x:'Inference: funds facing redemptions carried CTD as an illiquid line; resumption is the first exit window. No holder has disclosed this — category-level only.',src:'ASX long-term suspended notice (Apr 2026)'},
  {k:'forced',n:'Mandate breaches (min. market cap / liquidity)',why:'If the price falls far enough, some funds are no longer allowed to own it.',st:'POSSIBLE',c:45,sh:[2e6,6e6],dur:'1–2 weeks',ev:1,last:'trips if cap < ~$1bn',x:'Inference: a repricing toward the $7.60 sell-side target (~$1.1bn cap) would trip minimum-cap or liquidity screens. Conditional on price — recomputed from entered price.',src:'Analyst target A$7.60 (TipRanks, Apr 2026)'},
  {k:'disc',n:'Governance / risk-committee exits',why:'Some funds screen out companies with fraud findings — regardless of value.',st:'POSSIBLE',c:50,sh:[1e6,4e6],dur:'weeks',ev:2,last:'KPMG UK findings; UK CEO terminated Dec 2025',x:'Known fact: KPMG UK found misconduct by the former UK CEO FY19–FY25; restatement raised from £77.6m to up to £118m. Inference: governance-screened mandates may exit.',src:'Kalkine AU; company announcements'},
- {k:'disc',n:'Named substantial holders reducing',why:'Nobody has filed a change notice yet.',st:'NO EVIDENCE',c:0,sh:[0,0],dur:'—',ev:0,last:'no Form 604 since resumption',x:'Fact: no substantial-holder change notice lodged post-resumption. A 604 naming a passive vehicle would raise H1; one naming an active manager would raise H2.',src:'ASX announcements platform'},
+ {k:'disc',n:'Named substantial holders reducing',why:'The first holder notice since the return names an index-style manager going below 5%.',st:'CONFIRMED',c:100,sh:[2e6,5e6],dur:'done / ongoing',ev:3,last:'State Street ceased 3 Sep (notice 7 Sep); was 6.41% at 30 Jul',x:'Fact: State Street Corporation (and its asset-management entities) lodged a Ceasing-to-be-a-substantial-holder notice on 7 Sep 2026, effective 3 Sep - the first day back. It had reported 6.41% voting power at 30 Jul. Below 5% does not mean sold out. A second Change-in-substantial-holding notice was also lodged 7 Sep; the holder and size are not yet readable from the filing, so it is not attributed here. Read: supports H1 (index/institutional supply) for part of the post-return weakness.',src:'ASX announcement 7 Sep 2026 (State Street Form 605); Kalkine AU; owner scan 7 Sep'},
 ];
 const BUYERS=[
  {n:'Short covering',why:'Shorts were frozen too.',st:'NO EVIDENCE',c:15,sh:[0,0.5e6],dur:'—',ev:0,last:'ASIC shorts stale since Aug 2025',x:'Fact: ASIC daily short reports had no trades to update for 12 months. Inference: little covering demand unless a large pre-suspension short existed. Refresh from ASIC T+4 data.',src:'ASIC aggregated short positions'},
@@ -546,6 +576,42 @@ $('#focusBtn').addEventListener('click',()=>setFocus(!focus));$('#focusOff').add
 document.addEventListener('keydown',e=>{if(e.target.matches('input'))return;if(e.key==='f')setFocus(!focus);if(e.key==='a')setAdv(!adv);if(e.key==='Escape')setFocus(false)});
 setFocus(focus);setAdv(adv);
 setInterval(()=>{chart();$('#fbStamp').textContent='refreshed '+now()},300000);
+/* ---------- PRICE FLOW STRIP (owner 8 Sep 2026) ----------
+   WHAT: SESSIONS is every trading day since CTD came back: close price, shares traded, day range. It is written into the page as a fact table
+   (source noted per row) so the strip works with no internet. WHY the live overlay: when /api/history answers, its daily bars REPLACE the baked
+   rows for the same dates and add newer days, so the strip is live when it can be and honest when it cannot. */
+const SESSIONS=[
+ {d:'2026-09-03',close:2.32,vol:24.9e6,hi:null,lo:null,src:'first day back; Motley Fool AU / Travel Monitor 4 Sep'},
+ {d:'2026-09-04',close:2.25,vol:11.5e6,hi:null,lo:null,src:'owner scan 7 Sep'},
+ {d:'2026-09-07',close:2.17,vol:6.55e6,hi:2.41,lo:2.15,src:'owner scan 7 Sep'}
+];
+let pfLive=false;
+function pfDay(d){return new Date(d+'T12:00:00+10:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'})}
+function drawFlow(){const S=SESSIONS.slice(-12);if(!S.length)return;
+ // Last price block: live quote if we have one, else the last session close (and say which).
+ const q=(typeof lastGood!=='undefined'&&lastGood&&lastGood.price)?lastGood:null;const last=S[S.length-1];const prev=S.length>1?S[S.length-2]:null;
+ const px=q?q.price:last.close;const ref=q?(q.prevClose||last.close):(prev?prev.close:null);
+ $('#pfPx').textContent='$'+px.toFixed(2);
+ if(ref){const c=px-ref,pc=c/ref*100;const e=$('#pfChg');e.textContent=(c>=0?'+':'')+c.toFixed(2)+' ('+(pc>=0?'+':'')+pc.toFixed(1)+'%) vs previous close $'+ref.toFixed(2);e.className='chg '+(c<0?'dn':c>0?'up':'')}
+ $('#pfSt').textContent=q?('live · '+q.source+' · delayed ~20 min'+(q.high&&q.low?' · day range $'+q.low.toFixed(2)+'–$'+q.high.toFixed(2):'')):('close '+pfDay(last.d)+(last.lo&&last.hi?' · day range $'+last.lo.toFixed(2)+'–$'+last.hi.toFixed(2):'')+' · '+(last.vol/1e6).toFixed(1)+'m shares · '+(pfLive?'live history':'baked figures - live feed off'))+' · suspended a year ago at $16.07';
+ // The drawing: bars = shares traded (grey), line = close (navy). Scales are per-strip so three sessions still read clearly.
+ const W=600,H=150,padL=8,padR=8,top=18,base=118;const n=S.length;const step=(W-padL-padR)/n;
+ const closes=S.map(x=>x.close),vols=S.map(x=>x.vol);const cmin=Math.min(...closes)*0.97,cmax=Math.max(...closes)*1.03;const vmax=Math.max(...vols)||1;
+ const X=i=>padL+step*(i+0.5),Y=v=>top+(base-top)*(1-(v-cmin)/(cmax-cmin));
+ let g='';S.forEach((x,i)=>{const bh=(base-top)*0.9*(x.vol/vmax);g+='<rect x="'+(X(i)-step*0.28)+'" y="'+(base-bh)+'" width="'+(step*0.56)+'" height="'+bh+'" fill="#d9dee5"/>';
+   g+='<text x="'+X(i)+'" y="'+(base+14)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a8794">'+pfDay(x.d)+'</text>';
+   g+='<text x="'+X(i)+'" y="'+(base+27)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#7a8794">'+(x.vol/1e6).toFixed(1)+'m</text>'});
+ g+='<polyline fill="none" stroke="#12305c" stroke-width="2.5" points="'+S.map((x,i)=>X(i)+','+Y(x.close)).join(' ')+'"/>';
+ S.forEach((x,i)=>{g+='<circle cx="'+X(i)+'" cy="'+Y(x.close)+'" r="4" fill="#12305c"/><text x="'+X(i)+'" y="'+(Y(x.close)-9)+'" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="700" fill="#0f1a2a">$'+x.close.toFixed(2)+'</text>'});
+ $('#pfSvg').innerHTML=g;
+ // Session table under the drawing (every number the drawing used), so it can be checked line by line.
+ $('#pfTbl').innerHTML='<span>session</span><span>close</span><span>shares</span><span>vs prior</span>'+S.map((x,i)=>{const p=i?S[i-1].close:null;const ch=p?((x.close/p-1)*100):null;return '<span>'+pfDay(x.d)+'</span><b>$'+x.close.toFixed(2)+'</b><span>'+(x.vol/1e6).toFixed(1)+'m</span><span>'+(ch==null?'first day back':(ch>=0?'+':'')+ch.toFixed(1)+'%')+'</span>'}).join('');
+ // One-line read: fact first, then the so-what, then what would change it.
+ const v0=S[0].vol,vl=last.vol;const falling=S.length>=3&&S.every((x,i)=>i===0||x.vol<=S[i-1].vol);const lowerLows=S.length>=3&&S.every((x,i)=>i===0||x.close<S[i-1].close);
+ $('#pfRead').innerHTML='<b>Fact:</b> volume '+(falling?'has fallen every session':'is not falling cleanly')+' ('+(v0/1e6).toFixed(1)+'m → '+(vl/1e6).toFixed(1)+'m)'+(lowerLows?' while the close is still making lower lows':'')+'. <b>Read:</b> '+(falling&&lowerLows?'a finite pool of trapped and index sellers being worked through - not yet bullish, because nobody has stepped in to hold a level.':falling?'sellers thinning out.':'watch whether the sellers are done.')+' <b>Next tell:</b> does it hold roughly $2.15–$2.20 as volume keeps shrinking? A break lower on another 15–20m-share day says something different.'}
+async function loadHistory(){try{const r=await fetch('/api/history?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);const h=await r.json();if(!h.sessions||!h.sessions.length)throw new Error('empty');
+  h.sessions.forEach(b=>{const i=SESSIONS.findIndex(x=>x.d===b.d);const row={d:b.d,close:b.close,vol:b.vol,hi:b.hi,lo:b.lo,src:h.source};if(i>=0)SESSIONS[i]=row;else SESSIONS.push(row)});SESSIONS.sort((a,b)=>a.d<b.d?-1:1);pfLive=true}catch(e){}drawFlow()}
+drawFlow();loadHistory();setInterval(loadHistory,300000);
 /* ---------- LIVE FEED: /api/quote (server-side fetch, cached 20s) ---------- */
 lastGood=null;manual=ls.get('manual')||false;
 const M=$('#manual');M.checked=manual;
@@ -554,7 +620,7 @@ M.addEventListener('change',()=>{manual=M.checked;ls.set('manual',manual);setInp
 function applyQuote(q){if(q.high&&q.low)lastHL={high:q.high,low:q.low};$('#inPx').value=q.price.toFixed(2);$('#inVol').value=(q.volume/1e6).toFixed(2);if(q.vwap)$('#inVwap').value=q.vwap.toFixed(2);model();
  $('#inStamp').textContent=q.source+' · quote '+new Date(q.asOf).toLocaleTimeString('en-AU',{timeZone:'Australia/Sydney',hour:'2-digit',minute:'2-digit'})+' AEST · delayed ~20 min · refreshed '+now()}
 async function poll(){try{const r=await fetch('/api/quote?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(r.status);const q=await r.json();if(!q.price)throw new Error('no price');lastGood=q;lastGood.receivedAt=Date.now();
-  $('#feedLbl').textContent='AUTO FEED · '+q.source;if(!manual)applyQuote(q);feedStatus()}catch(e){feedStatus(e)}}
+  $('#feedLbl').textContent='AUTO FEED · '+q.source;if(!manual)applyQuote(q);feedStatus();drawFlow()}catch(e){feedStatus(e)}}
 function feedStatus(err){const dot=$('#statDot'),tx=$('#statTxt');const age=lastGood?(Date.now()-lastGood.receivedAt)/60000:Infinity;
  if(err&&!lastGood){dot.className='dot stale';tx.textContent='NO FEED · '+(err.message||'error');$('#inStamp').textContent='feed unavailable — type the tape manually';return}
  if(age>5){dot.className='dot stale';tx.textContent='STALE · last good '+Math.round(age)+' min ago';return}
